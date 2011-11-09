@@ -1,0 +1,14 @@
+{application, stripe,
+ [
+  {description, "stripe - erlang stripe.com API access"},
+  {vsn, "0.3"},
+  {modules, []},
+  {applications, [
+                  kernel,
+                  stdlib,
+                  inets,
+                  ssl
+                 ]},
+  {env, []}
+ ]
+}.
