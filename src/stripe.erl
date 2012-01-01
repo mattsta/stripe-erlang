@@ -59,6 +59,22 @@ token_create(CardNumber, ExpMon, ExpYr, Cvc,
   request_token_create(OnlyWithValues).
 
 %%%--------------------------------------------------------------------
+%%% subscription updating/creation and removal
+%%%--------------------------------------------------------------------
+subscription_update(Customer, Plan, Coupon, Prorate, TrialEnd) ->
+  Fields = [{"plan", Plan},
+            {"coupon", Coupon},
+            {"prorate", Prorate},
+            {"trial_end", TrialEnd}],
+  OnlyWithValues = [{K, V} || {K, V} <- Fields, V =/= [] andalso V =/= <<>>],
+  request_subscription(subscribe, Customer, OnlyWithValues).
+
+subscription_cancel(Customer, AtPeriodEnd) ->
+  Fields = [{"at_period_end", AtPeriodEnd}],
+  OnlyWithValues = [{K, V} || {K, V} <- Fields, V =/= [] andalso V =/= <<>>],
+  request_subscription(unsubscribe, Customer, OnlyWithValues).
+
+%%%--------------------------------------------------------------------
 %%% request generation and sending
 %%%--------------------------------------------------------------------
 request_charge(Fields) ->
@@ -73,6 +89,11 @@ request_token_create(Fields) ->
 request(Action, post, Fields) ->
   URL = gen_url(Action),
   request_run(URL, post, Fields).
+
+request_subscription(subscribe, Customer, Fields) ->
+  request_run(gen_subscription_url(Customer), post, Fields);
+request_subscription(unsubscribe, Customer, Fields) ->
+  request_run(gen_subscription_url(Customer), delete, Fields).
 
 request_run(URL, Method, Fields) ->
   Headers = [{"X-Stripe-Client-User-Agent", ua_json()},
@@ -216,3 +237,8 @@ gen_url(Action) when is_atom(Action) ->
   gen_url(atom_to_list(Action));
 gen_url(Action) when is_list(Action) ->
   "https://api.stripe.com/v1/" ++ Action.
+
+gen_subscription_url(Customer) when is_binary(Customer) ->
+  gen_subscription_url(binary_to_list(Customer));
+gen_subscription_url(Customer) when is_list(Customer) ->
+  "https://api.stripe.com/v1/customers/" ++ Customer ++ "/subscription".
