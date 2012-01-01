@@ -72,12 +72,15 @@ request_token_create(Fields) ->
 
 request(Action, post, Fields) ->
   URL = gen_url(Action),
+  request_run(URL, post, Fields).
+
+request_run(URL, Method, Fields) ->
   Headers = [{"X-Stripe-Client-User-Agent", ua_json()},
              {"User-Agent", "Stripe/v1 ErlangBindings/" ++ ?VSN_STR},
              {"Authorization", auth_key()}], 
   Type = "application/x-www-form-urlencoded",
   Body = gen_args(Fields),
-  Requested = httpc:request(post, {URL, Headers, Type, Body}, [], []),
+  Requested = httpc:request(Method, {URL, Headers, Type, Body}, [], []),
   resolve(Requested).
   
 %%%--------------------------------------------------------------------
