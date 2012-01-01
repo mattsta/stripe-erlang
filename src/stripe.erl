@@ -132,7 +132,7 @@ resolve_status(HTTPStatus, ErrorBody) ->
 json_to_record(Body) when is_list(Body) orelse is_binary(Body) ->
   DecodedResult = mochijson2:decode(Body, [{format, proplist}]),
   Type = proplists:get_value(<<"object">>, DecodedResult),
-  json_to_record(binary_to_atom(Type, utf8), DecodedResult).
+  json_to_record(binary_to_existing_atom(Type, utf8), DecodedResult).
 
 % Yes, these are verbose and dumb because we don't have runtime record/object
 % capabilities.  In a way, it's nice being explicit up front.
