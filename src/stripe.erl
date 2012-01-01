@@ -204,6 +204,28 @@ json_to_error(ErrCode, ErrCodeMeaning, Body) ->
                 param   = ?V(param)}.
 
 %%%--------------------------------------------------------------------
+%%% Simple IPN decoding
+%%%--------------------------------------------------------------------
+ipn(Json) ->
+  Decoded = mochijson2:decode(Json, [{format, proplist}]),
+  Event = proplists:get_value(<<"event">>, Decoded),
+  json_to_ipn_record(binary_to_existing_atom(Event, utf8), Decoded).
+
+-define(C(X), proplists:get_value(<<"customer">>, DecodedResult, nil)).
+json_to_ipn_record(recurring_payment_failed, DecodedResult) ->
+  {payment_failed, ?C(DecodedResult), DecodedResult};
+json_to_ipn_record(invoice_ready, DecodedResult) ->
+  {invoice_ready, ?C(DecodedResult), DecodedResult};
+json_to_ipn_record(recurring_payment_succeeded, DecodedResult) ->
+  {subscribe, ?C(DecodedResult), DecodedResult};
+json_to_ipn_record(subscription_trial_ending, DecodedResult) ->
+  {trial_ending, ?C(DecodedResult), DecodedResult};
+json_to_ipn_record(subscription_final_payment_attempt_failed, DecodedResult) ->
+  {subscription_failure, ?C(DecodedResult), DecodedResult};
+json_to_ipn_record(ping, _) ->
+  ping.
+
+%%%--------------------------------------------------------------------
 %%% value helpers
 %%%--------------------------------------------------------------------
 ua_json() ->
