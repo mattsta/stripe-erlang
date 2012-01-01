@@ -1,8 +1,9 @@
 -module(stripe).
 
--compile(export_all).
 -export([token_create/10, customer_create/3]).
 -export([charge_customer/4, charge_card/4]).
+-export([subscription_update/5, subscription_cancel/2]).
+-export([ipn/1]).
 
 -include("stripe.hrl").
 
