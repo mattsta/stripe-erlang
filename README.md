@@ -66,6 +66,10 @@ In no specific order:
 
 * Flesh out remaining stripe API
   * Adding a new API feature requires adding: exported user function, request wrapper, result to record extractor.
+  * Add support for the card `fingerprint` element in relevant places.
+  * Add support for the `fee_details` structure.
+  * Add support for the `disputed` flag.
+  * Add support for the `failure_message` note.
 * Add tests for error conditions
 * Move from env-specified auth token to something more call specific
   * Options:

@@ -42,7 +42,7 @@ charge_token() ->
   ?debugFmt("Token Charge ID: ~p~n", [Result#stripe_charge.id]),
   ?assertEqual(65540, Result#stripe_charge.amount),
   ?assertEqual(usd, Result#stripe_charge.currency),
-  ?assertEqual(0, Result#stripe_charge.fee),
+  ?assertEqual(1931, Result#stripe_charge.fee),
   ?assertEqual(true, Result#stripe_charge.paid),
   ?assertEqual(false, Result#stripe_charge.refunded),
   ?assertEqual(Desc, Result#stripe_charge.description),
@@ -69,7 +69,7 @@ charge_customer() ->
   ?assertEqual(Desc, Result#stripe_charge.description),
   ?assertEqual(6221, Result#stripe_charge.amount),
   ?assertEqual(usd, Result#stripe_charge.currency),
-  ?assertEqual(0, Result#stripe_charge.fee),
+  ?assertEqual(210, Result#stripe_charge.fee),
   ?assertEqual(true, Result#stripe_charge.paid),
   ?assertEqual(false, Result#stripe_charge.refunded).
 

@@ -128,7 +128,8 @@ resolve_status(HTTPStatus, ErrorBody) ->
 %%%--------------------------------------------------------------------
 %%% Json to local type object records
 %%%--------------------------------------------------------------------
--define(V(X), proplists:get_value(atom_to_binary(X, utf8), DecodedResult, nil)).
+-define(V(X), proplists:get_value(atom_to_binary(X, utf8),
+                                  DecodedResult, <<"Not Returned by API">>)).
 
 json_to_record(Body) when is_list(Body) orelse is_binary(Body) ->
   DecodedResult = mochijson2:decode(Body, [{format, proplist}]),
@@ -176,7 +177,7 @@ proplist_to_card(Card) ->
                address_zip_check   = check_to_atom(?V(address_zip_check)),
                country             = ?V(country)}.
 
-check_to_atom(nil) -> nil;
+check_to_atom(null) -> null;
 check_to_atom(Check) when is_binary(Check) -> binary_to_atom(Check, utf8).
 
 % error range conditions stolen from stripe-python
