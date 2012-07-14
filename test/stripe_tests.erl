@@ -32,7 +32,7 @@ create_token() ->
   put(current_token, Result#stripe_token.id),
   ?debugFmt("Token ID: ~p~n", [Result#stripe_token.id]),
   ?assertEqual(false, Result#stripe_token.used),
-  verify_default_card(Result#stripe_token.card).
+  verify_default_card(Result#stripe_token.card, nocheck).
 
 charge_token() ->
   Token = get(current_token),
@@ -46,7 +46,7 @@ charge_token() ->
   ?assertEqual(true, Result#stripe_charge.paid),
   ?assertEqual(false, Result#stripe_charge.refunded),
   ?assertEqual(Desc, Result#stripe_charge.description),
-  verify_default_card(Result#stripe_charge.card).
+  verify_default_card(Result#stripe_charge.card, check).
 
 create_customer() ->
   create_token(),
@@ -58,7 +58,7 @@ create_customer() ->
   put(current_customer, Result#stripe_customer.id),
   ?debugFmt("Customer ID: ~p~n", [Result#stripe_customer.id]),
   ?assertEqual(list_to_binary(Desc), Result#stripe_customer.description),
-  verify_default_card(Result#stripe_customer.active_card).
+  verify_default_card(Result#stripe_customer.active_card, check).
 
 charge_customer() ->
   Customer = get(current_customer),
@@ -76,8 +76,11 @@ charge_customer() ->
 %%%----------------------------------------------------------------------
 %%% Meta Tests
 %%%----------------------------------------------------------------------
-verify_default_card(Card) ->
-  ?assertEqual(pass, Card#stripe_card.cvc_check),
+verify_default_card(Card, CheckCVC) ->
+  case CheckCVC of
+    nocheck -> ?assertEqual('Not Returned by API', Card#stripe_card.cvc_check);
+      check -> ?assertEqual(pass, Card#stripe_card.cvc_check)
+  end,
   ?assertEqual(12, Card#stripe_card.exp_month),
   ?assertEqual(2012, Card#stripe_card.exp_year),
   ?assertEqual(<<"4242">>, Card#stripe_card.last4),
