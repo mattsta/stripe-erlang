@@ -164,7 +164,16 @@ json_to_record(customer, DecodedResult) ->
                    description = ?V(description),
                    livemode    = ?V(livemode),
                    created     = ?V(created),
-                   active_card = proplist_to_card(?V(active_card))}.
+                   active_card = proplist_to_card(?V(active_card))};
+
+json_to_record(subscription, DecodedResult) ->
+  #stripe_subscription{status               = binary_to_atom(?V(status), utf8),
+                       current_period_start = ?V(current_period_start),
+                       current_period_end   = ?V(current_period_end),
+                       customer             = ?V(customer),
+                       start                = ?V(start),
+                       quantity             = ?V(quantity),
+                       plan                 = proplist_to_plan(?V(plan))}.
 
 proplist_to_card(Card) ->
   DecodedResult = Card,
@@ -176,6 +185,16 @@ proplist_to_card(Card) ->
                address_line1_check = check_to_atom(?V(address_line1_check)),
                address_zip_check   = check_to_atom(?V(address_zip_check)),
                country             = ?V(country)}.
+
+proplist_to_plan(Plan) ->
+  DecodedResult = Plan,
+  #stripe_plan{id             = ?V(id),
+               currency       = binary_to_atom(?V(currency), utf8),
+               interval       = ?V(interval),
+               interval_count = ?V(interval_count),
+               name           = ?V(name),
+               amount         = ?V(amount),
+               livemode       = ?V(livemode)}.
 
 check_to_atom(null) -> null;
 check_to_atom(Check) when is_binary(Check) -> binary_to_atom(Check, utf8).

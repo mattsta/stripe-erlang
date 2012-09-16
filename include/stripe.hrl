@@ -24,7 +24,7 @@
 % Endpoints
 -type action() :: charges | customers | tokens.
 
-% Error Types            
+% Error Types
 -type payment_error() :: invalid_number | incorrect_number |
                          invalid_expiry_month | invalid_expiry_year |
                          invalid_cvc | expired_card | invalid_amount |
@@ -88,3 +88,21 @@
                        livemode  :: boolean(),
                        card      :: #stripe_card{}
                       }).
+
+-record(stripe_plan, {id             :: customer_id(),
+                      currency       :: currency(),
+                      interval_count :: pos_integer(),
+                      name           :: binary(),
+                      amount         :: amount(),
+                      interval       :: binary(),
+                      livemode       :: boolean()
+                     }).
+
+-record(stripe_subscription, {status        :: atom(),
+                              current_period_start :: epoch(),
+                              current_period_end   :: epoch(),
+                              customer             :: customer_id(),
+                              start                :: epoch(),
+                              quantity             :: number(),
+                              plan                 :: #stripe_plan{}
+                             }).
