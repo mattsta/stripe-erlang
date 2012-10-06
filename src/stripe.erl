@@ -70,10 +70,10 @@ subscription_update(Customer, Plan, Coupon, Prorate, TrialEnd) ->
   OnlyWithValues = [{K, V} || {K, V} <- Fields, V =/= [] andalso V =/= <<>>],
   request_subscription(subscribe, Customer, OnlyWithValues).
 
-subscription_cancel(Customer, AtPeriodEnd) ->
+subscription_cancel(Customer, AtPeriodEnd) when is_boolean(AtPeriodEnd) ->
   Fields = [{"at_period_end", AtPeriodEnd}],
   OnlyWithValues = [{K, V} || {K, V} <- Fields, V =/= [] andalso V =/= <<>>],
-  request_subscription(unsubscribe, Customer, OnlyWithValues).
+  request_subscription(unsubscribe, Customer, OnlyWithValues, AtPeriodEnd).
 
 %%%--------------------------------------------------------------------
 %%% request generation and sending
@@ -92,8 +92,12 @@ request(Action, post, Fields) ->
   request_run(URL, post, Fields).
 
 request_subscription(subscribe, Customer, Fields) ->
-  request_run(gen_subscription_url(Customer), post, Fields);
-request_subscription(unsubscribe, Customer, Fields) ->
+  request_run(gen_subscription_url(Customer), post, Fields).
+
+request_subscription(unsubscribe, Customer, Fields, _AtEnd = true) ->
+  request_run(gen_subscription_url(Customer) ++ "?at_period_end=true",
+    delete, Fields);
+request_subscription(unsubscribe, Customer, Fields, _AtEnd = false) ->
   request_run(gen_subscription_url(Customer), delete, Fields).
 
 request_run(URL, Method, Fields) ->
@@ -102,7 +106,13 @@ request_run(URL, Method, Fields) ->
              {"Authorization", auth_key()}], 
   Type = "application/x-www-form-urlencoded",
   Body = gen_args(Fields),
-  Requested = httpc:request(Method, {URL, Headers, Type, Body}, [], []),
+  Requested = case Method of
+                % erlang httpc requires a 2-tuple for delete.  no params.
+                delete -> httpc:request(Method,
+                           {URL, Headers}, [], []);
+                     _ -> httpc:request(Method,
+                           {URL, Headers, Type, Body}, [], [])
+  end,
   resolve(Requested).
   
 %%%--------------------------------------------------------------------
