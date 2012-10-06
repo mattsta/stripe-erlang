@@ -180,6 +180,8 @@ json_to_record(subscription, DecodedResult) ->
   #stripe_subscription{status               = binary_to_atom(?V(status), utf8),
                        current_period_start = ?V(current_period_start),
                        current_period_end   = ?V(current_period_end),
+                       ended_at             = ?V(ended_at),
+                       canceled_at          = ?V(canceled_at),
                        customer             = ?V(customer),
                        start                = ?V(start),
                        quantity             = ?V(quantity),

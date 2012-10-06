@@ -101,6 +101,8 @@
 -record(stripe_subscription, {status        :: atom(),
                               current_period_start :: epoch(),
                               current_period_end   :: epoch(),
+                              ended_at             :: epoch(),
+                              canceled_at          :: epoch(),
                               customer             :: customer_id(),
                               start                :: epoch(),
                               quantity             :: number(),
