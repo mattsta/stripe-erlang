@@ -18,7 +18,9 @@ stripe_test_() ->
      {"Create Customer",
        fun create_customer/0},
      {"Charge Customer",
-       fun charge_customer/0}
+       fun charge_customer/0},
+     {"Update Customer",
+       fun update_customer/0}
     ]
   }.
 
@@ -72,6 +74,15 @@ charge_customer() ->
   ?assertEqual(210, Result#stripe_charge.fee),
   ?assertEqual(true, Result#stripe_charge.paid),
   ?assertEqual(false, Result#stripe_charge.refunded).
+
+update_customer() ->
+  create_token(),
+  Token = get(current_token),
+  Email = "h222okum@pokum.com",
+  Result = ?debugTime("Updating customer",
+    stripe:customer_update(get(current_customer), Token, Email)),
+  ?debugFmt("Customer ID: ~p~n", [Result#stripe_customer.id]),
+  verify_default_card(Result#stripe_customer.active_card, check).
 
 %%%----------------------------------------------------------------------
 %%% Meta Tests

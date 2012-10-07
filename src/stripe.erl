@@ -1,6 +1,6 @@
 -module(stripe).
 
--export([token_create/10, customer_create/3]).
+-export([token_create/10, customer_create/3, customer_update/3]).
 -export([charge_customer/4, charge_card/4]).
 -export([subscription_update/5, subscription_cancel/2]).
 -export([ipn/1]).
@@ -40,6 +40,16 @@ customer_create(Card, Email, Desc) ->
             {email, Email},
             {description, Desc}],
   request_customer_create(Fields).
+
+%%%--------------------------------------------------------------------
+%%% Customer Updating
+%%%--------------------------------------------------------------------
+-spec customer_update(customer_id(), token_id(), email()) -> result.
+customer_update(CustomerId, Token, Email) ->
+  Fields = [{"card", Token},
+            {"email", Email}],
+  OnlyWithValues = [{K, V} || {K, V} <- Fields, V =/= [] andalso V =/= <<>>],
+  request_customer_update(CustomerId, OnlyWithValues).
 
 %%%--------------------------------------------------------------------
 %%% Token Generation
@@ -83,6 +93,9 @@ request_charge(Fields) ->
 
 request_customer_create(Fields) ->
   request(customers, post, Fields).
+
+request_customer_update(CustomerId, Fields) ->
+  request_run(gen_customer_update_url(CustomerId), post, Fields).
 
 request_token_create(Fields) ->
   request(tokens, post, Fields).
@@ -292,6 +305,11 @@ gen_url(Action) when is_atom(Action) ->
   gen_url(atom_to_list(Action));
 gen_url(Action) when is_list(Action) ->
   "https://api.stripe.com/v1/" ++ Action.
+
+gen_customer_update_url(CustomerId) when is_binary(CustomerId) ->
+  gen_customer_update_url(binary_to_list(CustomerId));
+gen_customer_update_url(CustomerId) when is_list(CustomerId) ->
+  "https://api.stripe.com/v1/customers/" ++ CustomerId.
 
 gen_subscription_url(Customer) when is_binary(Customer) ->
   gen_subscription_url(binary_to_list(Customer));
