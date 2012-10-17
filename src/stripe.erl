@@ -3,7 +3,7 @@
 -export([token_create/10, customer_create/3, customer_update/3]).
 -export([charge_customer/4, charge_card/4]).
 -export([subscription_update/5, subscription_cancel/2]).
--export([event/1]).
+-export([customer/1, event/1]).
 
 -include("stripe.hrl").
 
@@ -91,6 +91,9 @@ subscription_cancel(Customer, AtPeriodEnd) when is_boolean(AtPeriodEnd) ->
 event(EventId) ->
   request_event(EventId).
 
+customer(CustomerId) ->
+  request_customer(CustomerId).
+
 %%%--------------------------------------------------------------------
 %%% request generation and sending
 %%%--------------------------------------------------------------------
@@ -100,11 +103,14 @@ request_charge(Fields) ->
 request_event(EventId) ->
   request_run(gen_event_url(EventId), post, []).
 
+request_customer(CustomerId) ->
+  request_run(gen_customer_url(CustomerId), post, []).
+
 request_customer_create(Fields) ->
   request(customers, post, Fields).
 
 request_customer_update(CustomerId, Fields) ->
-  request_run(gen_customer_update_url(CustomerId), post, Fields).
+  request_run(gen_customer_url(CustomerId), post, Fields).
 
 request_token_create(Fields) ->
   request(tokens, post, Fields).
@@ -211,9 +217,10 @@ json_to_record(customer, DecodedResult) ->
                    description = ?V(description),
                    livemode    = ?V(livemode),
                    created     = ?V(created),
+                   subscription = json_to_record(subscription, ?V(subscription)),
                    active_card = proplist_to_card(?V(active_card))};
 
-json_to_record(subscription, DecodedResult) ->
+json_to_record(subscription, DecodedResult) when is_list(DecodedResult) ->
   #stripe_subscription{status               = binary_to_atom(?V(status), utf8),
                        current_period_start = ?V(current_period_start),
                        current_period_end   = ?V(current_period_end),
@@ -222,7 +229,8 @@ json_to_record(subscription, DecodedResult) ->
                        customer             = ?V(customer),
                        start                = ?V(start),
                        quantity             = ?V(quantity),
-                       plan                 = proplist_to_plan(?V(plan))}.
+                       plan                 = proplist_to_plan(?V(plan))};
+json_to_record(subscription, _) -> ?NRAPI.
 
 proplist_to_card(Card) ->
   DecodedResult = Card,
@@ -308,9 +316,9 @@ gen_url(Action) when is_atom(Action) ->
 gen_url(Action) when is_list(Action) ->
   "https://api.stripe.com/v1/" ++ Action.
 
-gen_customer_update_url(CustomerId) when is_binary(CustomerId) ->
-  gen_customer_update_url(binary_to_list(CustomerId));
-gen_customer_update_url(CustomerId) when is_list(CustomerId) ->
+gen_customer_url(CustomerId) when is_binary(CustomerId) ->
+  gen_customer_url(binary_to_list(CustomerId));
+gen_customer_url(CustomerId) when is_list(CustomerId) ->
   "https://api.stripe.com/v1/customers/" ++ CustomerId.
 
 gen_subscription_url(Customer) when is_binary(Customer) ->

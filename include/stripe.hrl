@@ -77,13 +77,6 @@
                         card        :: #stripe_card{}
                       }).
 
--record(stripe_customer, {id          :: customer_id(),
-                          created     :: epoch(),
-                          description :: desc(),
-                          livemode    :: boolean(),
-                          active_card :: #stripe_card{}
-                         }).
-
 -record(stripe_token, {id        :: token_id(),
                        currency  :: currency(),
                        used      :: boolean(),
@@ -111,6 +104,14 @@
                               quantity             :: number(),
                               plan                 :: #stripe_plan{}
                              }).
+
+-record(stripe_customer, {id           :: customer_id(),
+                          created      :: epoch(),
+                          description  :: desc(),
+                          livemode     :: boolean(),
+                          subscription :: #stripe_subscription{},
+                          active_card  :: #stripe_card{}
+                         }).
 
 -record(stripe_event, {id      :: event_id(),
                        type    :: event_type(),
