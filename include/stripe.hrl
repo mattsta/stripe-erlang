@@ -73,6 +73,7 @@
                         livemode    :: boolean(),
                         paid        :: boolean(),
                         refunded    :: boolean(),
+                        customer    :: customer_id(),
                         card        :: #stripe_card{}
                       }).
 

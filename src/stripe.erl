@@ -195,6 +195,7 @@ json_to_record(charge, DecodedResult) ->
                  livemode     = ?V(livemode),
                  paid         = ?V(paid),
                  refunded     = ?V(refunded),
+                 customer     = ?V(customer),
                  card         = proplist_to_card(?V(card))};
 
 json_to_record(token, DecodedResult) ->
