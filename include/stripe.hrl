@@ -20,6 +20,8 @@
 -type credit_provider() :: binary().
 -type stripe_object_name() :: charge | customer | invoice | invoiceitem |
                               plan | token.
+-type event_id() :: binary() | string().
+-type event_type() :: binary() | string().
 
 % Endpoints
 -type action() :: charges | customers | tokens.
@@ -108,3 +110,8 @@
                               quantity             :: number(),
                               plan                 :: #stripe_plan{}
                              }).
+
+-record(stripe_event, {id      :: event_id(),
+                       type    :: event_type(),
+                       created :: epoch(),
+                       data}).

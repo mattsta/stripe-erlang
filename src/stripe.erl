@@ -3,6 +3,7 @@
 -export([token_create/10, customer_create/3, customer_update/3]).
 -export([charge_customer/4, charge_card/4]).
 -export([subscription_update/5, subscription_cancel/2]).
+-export([event/1]).
 
 -include("stripe.hrl").
 
@@ -85,10 +86,19 @@ subscription_cancel(Customer, AtPeriodEnd) when is_boolean(AtPeriodEnd) ->
   request_subscription(unsubscribe, Customer, OnlyWithValues, AtPeriodEnd).
 
 %%%--------------------------------------------------------------------
+%%% event retrieval
+%%%--------------------------------------------------------------------
+event(EventId) ->
+  request_event(EventId).
+
+%%%--------------------------------------------------------------------
 %%% request generation and sending
 %%%--------------------------------------------------------------------
 request_charge(Fields) ->
   request(charges, post, Fields).
+
+request_event(EventId) ->
+  request_run(gen_event_url(EventId), post, []).
 
 request_customer_create(Fields) ->
   request(customers, post, Fields).
@@ -138,7 +148,7 @@ resolve({error, Reason}) ->
   {error, Reason}.
 
 -spec resolve_status(pos_integer(), json()) ->
-    #stripe_card{} | #stripe_token{} |
+    #stripe_card{} | #stripe_token{} | #stripe_event{} |
     #stripe_customer{} | #stripe_error{}.
 % success range conditions stolen from stripe-python
 resolve_status(HTTPStatus, SuccessBody) when
@@ -150,13 +160,27 @@ resolve_status(HTTPStatus, ErrorBody) ->
 %%%--------------------------------------------------------------------
 %%% Json to local type object records
 %%%--------------------------------------------------------------------
+-define(NRAPI, <<"Not Returned by API">>).
 -define(V(X), proplists:get_value(atom_to_binary(X, utf8),
-                                  DecodedResult, <<"Not Returned by API">>)).
+                                  DecodedResult, ?NRAPI)).
 
+json_to_record(Json) when is_list(Json) andalso is_tuple(hd(Json)) ->
+  case proplists:get_value(<<"object">>, Json) of
+    undefined -> json_to_event_record(Json);
+    Found -> json_to_record(binary_to_existing_atom(Found, utf8), Json)
+  end;
 json_to_record(Body) when is_list(Body) orelse is_binary(Body) ->
   DecodedResult = mochijson2:decode(Body, [{format, proplist}]),
-  Type = proplists:get_value(<<"object">>, DecodedResult),
-  json_to_record(binary_to_existing_atom(Type, utf8), DecodedResult).
+  json_to_record(DecodedResult).
+
+json_to_event_record(DecodedResult) ->
+  Data = ?V(data),
+  ObjectType = proplists:get_value(<<"object">>, Data),
+  DataType = binary_to_existing_atom(ObjectType, utf8),
+  #stripe_event{id      = ?V(id),
+                type    = ?V(type),
+                created = ?V(created),
+                data    = json_to_record(DataType, Data)}.
 
 % Yes, these are verbose and dumb because we don't have runtime record/object
 % capabilities.  In a way, it's nice being explicit up front.
@@ -292,3 +316,8 @@ gen_subscription_url(Customer) when is_binary(Customer) ->
   gen_subscription_url(binary_to_list(Customer));
 gen_subscription_url(Customer) when is_list(Customer) ->
   "https://api.stripe.com/v1/customers/" ++ Customer ++ "/subscription".
+
+gen_event_url(EventId) when is_binary(EventId) ->
+  gen_event_url(binary_to_list(EventId));
+gen_event_url(EventId) when is_list(EventId) ->
+  "https://api.stripe.com/v1/events/" ++ EventId.
