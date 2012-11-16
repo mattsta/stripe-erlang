@@ -308,7 +308,7 @@ env(What, Default) ->
   end.
 
 -spec gen_args(proplist()) -> string().
-gen_args(Fields) when is_list(Fields) andalso is_tuple(hd(Fields)) ->
+gen_args(Fields) when is_list(Fields) ->
   mochiweb_util:urlencode(Fields).
 
 gen_url(Action) when is_atom(Action) ->
