@@ -101,7 +101,7 @@ request_charge(Fields) ->
   request(charges, post, Fields).
 
 request_event(EventId) ->
-  request_run(gen_event_url(EventId), post, []).
+  request_run(gen_event_url(EventId), get, []).
 
 request_customer(CustomerId) ->
   request_run(gen_customer_url(CustomerId), post, []).
@@ -136,7 +136,8 @@ request_run(URL, Method, Fields) ->
   Body = gen_args(Fields),
   Requested = case Method of
                 % erlang httpc requires a 2-tuple for delete.  no params.
-                delete -> httpc:request(Method,
+                M when M =:= delete orelse M =:= get
+                       -> httpc:request(Method,
                            {URL, Headers}, [], []);
                      _ -> httpc:request(Method,
                            {URL, Headers, Type, Body}, [], [])
