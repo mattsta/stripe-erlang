@@ -3,7 +3,7 @@
 -export([token_create/10, customer_create/3, customer_update/3]).
 -export([charge_customer/4, charge_card/4]).
 -export([subscription_update/5, subscription_cancel/2]).
--export([customer/1, event/1]).
+-export([customer/1, event/1, invoiceitem/1]).
 
 -include("stripe.hrl").
 
@@ -94,6 +94,9 @@ event(EventId) ->
 customer(CustomerId) ->
   request_customer(CustomerId).
 
+invoiceitem(InvoiceItemId) ->
+  request_invoiceitem(InvoiceItemId).
+
 %%%--------------------------------------------------------------------
 %%% request generation and sending
 %%%--------------------------------------------------------------------
@@ -104,7 +107,10 @@ request_event(EventId) ->
   request_run(gen_event_url(EventId), get, []).
 
 request_customer(CustomerId) ->
-  request_run(gen_customer_url(CustomerId), post, []).
+  request_run(gen_customer_url(CustomerId), get, []).
+
+request_invoiceitem(InvoiceItemId) ->
+  request_run(gen_invoiceitem_url(InvoiceItemId), get, []).
 
 request_customer_create(Fields) ->
   request(customers, post, Fields).
@@ -330,6 +336,11 @@ gen_customer_url(CustomerId) when is_binary(CustomerId) ->
   gen_customer_url(binary_to_list(CustomerId));
 gen_customer_url(CustomerId) when is_list(CustomerId) ->
   "https://api.stripe.com/v1/customers/" ++ CustomerId.
+
+gen_invoiceitem_url(InvoiceItemId) when is_binary(InvoiceItemId) ->
+  gen_customer_url(binary_to_list(InvoiceItemId));
+gen_invoiceitem_url(InvoiceItemId) when is_list(InvoiceItemId) ->
+  "https://api.stripe.com/v1/invoiceitems/" ++ InvoiceItemId.
 
 gen_subscription_url(Customer) when is_binary(Customer) ->
   gen_subscription_url(binary_to_list(Customer));
