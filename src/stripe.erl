@@ -173,8 +173,8 @@ resolve_status(HTTPStatus, ErrorBody) ->
 
 json_to_record(Json) when is_list(Json) andalso is_tuple(hd(Json)) ->
   case proplists:get_value(<<"object">>, Json) of
-    undefined -> json_to_event_record(Json);
-    Found -> json_to_record(binary_to_existing_atom(Found, utf8), Json)
+    <<"event">> -> json_to_event_record(Json);
+          Found -> json_to_record(binary_to_existing_atom(Found, utf8), Json)
   end;
 json_to_record(Body) when is_list(Body) orelse is_binary(Body) ->
   DecodedResult = mochijson2:decode(Body, [{format, proplist}]),
@@ -182,12 +182,13 @@ json_to_record(Body) when is_list(Body) orelse is_binary(Body) ->
 
 json_to_event_record(DecodedResult) ->
   Data = ?V(data),
-  ObjectType = proplists:get_value(<<"object">>, Data),
-  DataType = binary_to_existing_atom(ObjectType, utf8),
+  Object = proplists:get_value(<<"object">>, Data),
+  ObjectName = proplists:get_value(<<"object">>, Object),
+  DataType = binary_to_existing_atom(ObjectName, utf8),
   #stripe_event{id      = ?V(id),
                 type    = ?V(type),
                 created = ?V(created),
-                data    = json_to_record(DataType, Data)}.
+                data    = json_to_record(DataType, Object)}.
 
 % Yes, these are verbose and dumb because we don't have runtime record/object
 % capabilities.  In a way, it's nice being explicit up front.
