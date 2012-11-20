@@ -232,7 +232,15 @@ json_to_record(subscription, DecodedResult) when is_list(DecodedResult) ->
                        start                = ?V(start),
                        quantity             = ?V(quantity),
                        plan                 = proplist_to_plan(?V(plan))};
-json_to_record(subscription, _) -> ?NRAPI.
+json_to_record(subscription, _) -> ?NRAPI;
+
+json_to_record(invoiceitem, DecodedResult) ->
+  #stripe_invoiceitem{id           = ?V(id),
+                      amount       = ?V(amount),
+                      currency     = binary_to_atom(?V(currency), utf8),
+                      date         = ?V(date),
+                      description  = ?V(description),
+                      proration    = ?V(proration)}.
 
 proplist_to_card(Card) ->
   DecodedResult = Card,
