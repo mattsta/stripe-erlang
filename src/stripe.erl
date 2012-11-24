@@ -180,7 +180,7 @@ resolve_status(HTTPStatus, ErrorBody) ->
 json_to_record(Json) when is_list(Json) andalso is_tuple(hd(Json)) ->
   case proplists:get_value(<<"object">>, Json) of
     <<"event">> -> json_to_event_record(Json);
-          Found -> json_to_record(binary_to_existing_atom(Found, utf8), Json)
+          Found -> json_to_record(binary_to_atom(Found, utf8), Json)
   end;
 json_to_record(Body) when is_list(Body) orelse is_binary(Body) ->
   DecodedResult = mochijson2:decode(Body, [{format, proplist}]),
@@ -190,7 +190,7 @@ json_to_event_record(DecodedResult) ->
   Data = ?V(data),
   Object = proplists:get_value(<<"object">>, Data),
   ObjectName = proplists:get_value(<<"object">>, Object),
-  DataType = binary_to_existing_atom(ObjectName, utf8),
+  DataType = binary_to_atom(ObjectName, utf8),
   #stripe_event{id      = ?V(id),
                 type    = ?V(type),
                 created = ?V(created),
@@ -238,7 +238,6 @@ json_to_record(subscription, DecodedResult) when is_list(DecodedResult) ->
                        start                = ?V(start),
                        quantity             = ?V(quantity),
                        plan                 = proplist_to_plan(?V(plan))};
-json_to_record(subscription, _) -> ?NRAPI;
 
 json_to_record(invoiceitem, DecodedResult) ->
   #stripe_invoiceitem{id           = ?V(id),
@@ -246,7 +245,10 @@ json_to_record(invoiceitem, DecodedResult) ->
                       currency     = binary_to_atom(?V(currency), utf8),
                       date         = ?V(date),
                       description  = ?V(description),
-                      proration    = ?V(proration)}.
+                      proration    = ?V(proration)};
+
+json_to_record(Type, DecodedResult) ->
+  {not_implemented_yet, Type, DecodedResult}.
 
 proplist_to_card(Card) ->
   DecodedResult = Card,
