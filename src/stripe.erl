@@ -243,6 +243,7 @@ json_to_record(invoiceitem, DecodedResult) ->
   #stripe_invoiceitem{id           = ?V(id),
                       amount       = ?V(amount),
                       currency     = binary_to_atom(?V(currency), utf8),
+                      customer     = ?V(customer),
                       date         = ?V(date),
                       description  = ?V(description),
                       proration    = ?V(proration)};

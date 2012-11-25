@@ -121,6 +121,7 @@
 -record(stripe_invoiceitem, {id          :: invoice_id(),
                              amount      :: amount(),
                              currency    :: currency(),
+                             customer    :: customer_id(),
                              date        :: epoch(),
                              description :: binary(),
                              proration   :: boolean()}).
