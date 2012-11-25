@@ -7,6 +7,7 @@
 -type price()        :: 50..500000000.  % valid charge prices. $0.50 to $5M.
 -type currency()     :: usd.
 -type customer_id()  :: binary(). % cu_* | cus_*  (docs show both in use)
+-type plan_id()      :: binary(). % user specified plan ID
 -type charge_id()    :: binary(). % ch_*
 -type token_id()     :: binary(). % tok_*
 -type invoiceitem_id() :: binary(). % ii_*
@@ -85,7 +86,7 @@
                        card      :: #stripe_card{}
                       }).
 
--record(stripe_plan, {id             :: customer_id(),
+-record(stripe_plan, {id             :: plan_id(),
                       currency       :: currency(),
                       interval_count :: pos_integer(),
                       name           :: binary(),
