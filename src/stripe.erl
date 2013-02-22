@@ -1,6 +1,6 @@
 -module(stripe).
 
--export([token_create/10, customer_create/3, customer_update/3]).
+-export([token_create/10, customer_create/3, customer_get/1, customer_update/3]).
 -export([charge_customer/4, charge_card/4]).
 -export([subscription_update/5, subscription_cancel/2]).
 -export([ipn/1]).
@@ -40,6 +40,13 @@ customer_create(Card, Email, Desc) ->
             {email, Email},
             {description, Desc}],
   request_customer_create(Fields).
+
+%%%--------------------------------------------------------------------
+%%% Customer Fetching
+%%%--------------------------------------------------------------------
+-spec customer_get(customer_id()) -> result.
+customer_get(CustomerId) ->
+  request_customer(CustomerId).
 
 %%%--------------------------------------------------------------------
 %%% Customer Updating
@@ -94,8 +101,11 @@ request_charge(Fields) ->
 request_customer_create(Fields) ->
   request(customers, post, Fields).
 
+request_customer(CustomerId) ->
+  request_run(gen_customer_url(CustomerId), get, []).
+
 request_customer_update(CustomerId, Fields) ->
-  request_run(gen_customer_update_url(CustomerId), post, Fields).
+  request_run(gen_customer_url(CustomerId), post, Fields).
 
 request_token_create(Fields) ->
   request(tokens, post, Fields).
@@ -119,13 +129,13 @@ request_run(URL, Method, Fields) ->
              {"Authorization", auth_key()}], 
   Type = "application/x-www-form-urlencoded",
   Body = gen_args(Fields),
-  Requested = case Method of
-                % erlang httpc requires a 2-tuple for delete.  no params.
-                delete -> httpc:request(Method,
-                           {URL, Headers}, [], []);
-                     _ -> httpc:request(Method,
-                           {URL, Headers, Type, Body}, [], [])
-  end,
+  Request = case Method of
+              % get and delete are body-less http requests
+              get -> {URL, Headers};
+              deleted -> {URL, Headers};
+              _ -> {URL, Headers, Type, Body}
+            end,
+  Requested = httpc:request(Method, Request, [], []),
   resolve(Requested).
   
 %%%--------------------------------------------------------------------
@@ -298,6 +308,7 @@ env(What, Default) ->
   end.
 
 -spec gen_args(proplist()) -> string().
+gen_args([]) -> "";
 gen_args(Fields) when is_list(Fields) andalso is_tuple(hd(Fields)) ->
   mochiweb_util:urlencode(Fields).
 
@@ -306,9 +317,9 @@ gen_url(Action) when is_atom(Action) ->
 gen_url(Action) when is_list(Action) ->
   "https://api.stripe.com/v1/" ++ Action.
 
-gen_customer_update_url(CustomerId) when is_binary(CustomerId) ->
-  gen_customer_update_url(binary_to_list(CustomerId));
-gen_customer_update_url(CustomerId) when is_list(CustomerId) ->
+gen_customer_url(CustomerId) when is_binary(CustomerId) ->
+  gen_customer_url(binary_to_list(CustomerId));
+gen_customer_url(CustomerId) when is_list(CustomerId) ->
   "https://api.stripe.com/v1/customers/" ++ CustomerId.
 
 gen_subscription_url(Customer) when is_binary(Customer) ->

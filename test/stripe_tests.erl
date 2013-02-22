@@ -17,6 +17,8 @@ stripe_test_() ->
        fun charge_token/0},
      {"Create Customer",
        fun create_customer/0},
+     {"Get Customer",
+       fun get_customer/0},
      {"Charge Customer",
        fun charge_customer/0},
      {"Update Customer",
@@ -60,6 +62,13 @@ create_customer() ->
   put(current_customer, Result#stripe_customer.id),
   ?debugFmt("Customer ID: ~p~n", [Result#stripe_customer.id]),
   ?assertEqual(list_to_binary(Desc), Result#stripe_customer.description),
+  verify_default_card(Result#stripe_customer.active_card, check).
+
+get_customer() ->
+  Customer = get(current_customer),
+  Result = ?debugTime("Fetching customer",
+    stripe:customer_get(Customer)),
+  ?debugFmt("Customer ID: ~p~n", [Result#stripe_customer.id]),
   verify_default_card(Result#stripe_customer.active_card, check).
 
 charge_customer() ->
