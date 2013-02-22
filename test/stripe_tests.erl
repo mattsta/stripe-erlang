@@ -15,8 +15,12 @@ stripe_test_() ->
        fun create_token/0},
      {"Charge Token",
        fun charge_token/0},
+     {"Create Minimum Customer",
+       fun create_min_customer/0},
      {"Create Customer",
        fun create_customer/0},
+     {"Get Customer",
+       fun get_customer/0},
      {"Charge Customer",
        fun charge_customer/0},
      {"Update Customer",
@@ -29,7 +33,7 @@ stripe_test_() ->
 %%%----------------------------------------------------------------------
 create_token() ->
   Result = ?debugTime("Creating token",
-    stripe:token_create("4242424242424242", 12, 2012, 123,
+    stripe:token_create("4242424242424242", 12, 2021, 123,
                         [], [], [], [], [], [])),
   put(current_token, Result#stripe_token.id),
   ?debugFmt("Token ID: ~p~n", [Result#stripe_token.id]),
@@ -50,6 +54,11 @@ charge_token() ->
   ?assertEqual(Desc, Result#stripe_charge.description),
   verify_default_card(Result#stripe_charge.card, check).
 
+create_min_customer() ->
+  Result = ?debugTime("Creating minimum customer",
+    stripe:customer_create("", "", "")),
+  ?debugFmt("Customer ID: ~p~n", [Result#stripe_customer.id]).
+
 create_customer() ->
   create_token(),
   Token = get(current_token),
@@ -60,6 +69,13 @@ create_customer() ->
   put(current_customer, Result#stripe_customer.id),
   ?debugFmt("Customer ID: ~p~n", [Result#stripe_customer.id]),
   ?assertEqual(list_to_binary(Desc), Result#stripe_customer.description),
+  verify_default_card(Result#stripe_customer.active_card, check).
+
+get_customer() ->
+  Customer = get(current_customer),
+  Result = ?debugTime("Fetching customer",
+    stripe:customer_get(Customer)),
+  ?debugFmt("Customer ID: ~p~n", [Result#stripe_customer.id]),
   verify_default_card(Result#stripe_customer.active_card, check).
 
 charge_customer() ->
@@ -93,7 +109,7 @@ verify_default_card(Card, CheckCVC) ->
       check -> ?assertEqual(pass, Card#stripe_card.cvc_check)
   end,
   ?assertEqual(12, Card#stripe_card.exp_month),
-  ?assertEqual(2012, Card#stripe_card.exp_year),
+  ?assertEqual(2021, Card#stripe_card.exp_year),
   ?assertEqual(<<"4242">>, Card#stripe_card.last4),
   ?assertEqual(<<"Visa">>, Card#stripe_card.type).
 

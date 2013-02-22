@@ -1,8 +1,8 @@
 -module(stripe).
 
--export([token_create/10, customer_create/3, customer_update/3]).
+-export([token_create/10, customer_create/3, customer_get/1, customer_update/3]).
 -export([charge_customer/4, charge_card/4]).
--export([subscription_update/5, subscription_cancel/2]).
+-export([subscription_update/5, subscription_update/6, subscription_cancel/2]).
 -export([ipn/1]).
 
 -include("stripe.hrl").
@@ -39,7 +39,15 @@ customer_create(Card, Email, Desc) ->
   Fields = [{card, Card},
             {email, Email},
             {description, Desc}],
-  request_customer_create(Fields).
+  OnlyWithValues = [{K, V} || {K, V} <- Fields, V =/= [] andalso V =/= <<>>],
+  request_customer_create(OnlyWithValues).
+
+%%%--------------------------------------------------------------------
+%%% Customer Fetching
+%%%--------------------------------------------------------------------
+-spec customer_get(customer_id()) -> result.
+customer_get(CustomerId) ->
+  request_customer(CustomerId).
 
 %%%--------------------------------------------------------------------
 %%% Customer Updating
@@ -73,10 +81,13 @@ token_create(CardNumber, ExpMon, ExpYr, Cvc,
 %%% subscription updating/creation and removal
 %%%--------------------------------------------------------------------
 subscription_update(Customer, Plan, Coupon, Prorate, TrialEnd) ->
+  subscription_update(Customer, Plan, Coupon, Prorate, TrialEnd, "").
+subscription_update(Customer, Plan, Coupon, Prorate, TrialEnd, Quantity) ->
   Fields = [{"plan", Plan},
             {"coupon", Coupon},
             {"prorate", Prorate},
-            {"trial_end", TrialEnd}],
+            {"trial_end", TrialEnd},
+            {"quantity", Quantity}],
   OnlyWithValues = [{K, V} || {K, V} <- Fields, V =/= [] andalso V =/= <<>>],
   request_subscription(subscribe, Customer, OnlyWithValues).
 
@@ -94,8 +105,11 @@ request_charge(Fields) ->
 request_customer_create(Fields) ->
   request(customers, post, Fields).
 
+request_customer(CustomerId) ->
+  request_run(gen_customer_url(CustomerId), get, []).
+
 request_customer_update(CustomerId, Fields) ->
-  request_run(gen_customer_update_url(CustomerId), post, Fields).
+  request_run(gen_customer_url(CustomerId), post, Fields).
 
 request_token_create(Fields) ->
   request(tokens, post, Fields).
@@ -119,13 +133,13 @@ request_run(URL, Method, Fields) ->
              {"Authorization", auth_key()}], 
   Type = "application/x-www-form-urlencoded",
   Body = gen_args(Fields),
-  Requested = case Method of
-                % erlang httpc requires a 2-tuple for delete.  no params.
-                delete -> httpc:request(Method,
-                           {URL, Headers}, [], []);
-                     _ -> httpc:request(Method,
-                           {URL, Headers, Type, Body}, [], [])
-  end,
+  Request = case Method of
+              % get and delete are body-less http requests
+              get -> {URL, Headers};
+              deleted -> {URL, Headers};
+              _ -> {URL, Headers, Type, Body}
+            end,
+  Requested = httpc:request(Method, Request, [], []),
   resolve(Requested).
   
 %%%--------------------------------------------------------------------
@@ -183,12 +197,18 @@ json_to_record(token, DecodedResult) ->
                 card = proplist_to_card(?V(card))};
 
 json_to_record(customer, DecodedResult) ->
-  #stripe_customer{id          = ?V(id),
-                   description = ?V(description),
-                   livemode    = ?V(livemode),
-                   created     = ?V(created),
-                   active_card = proplist_to_card(?V(active_card))};
+  #stripe_customer{id              = ?V(id),
+                   description     = ?V(description),
+                   livemode        = ?V(livemode),
+                   created         = ?V(created),
+                   active_card     = proplist_to_card(?V(active_card)),
+                   email           = ?V(email),
+                   delinquent      = ?V(delinquent),
+                   subscription    = json_to_record(subscription, ?V(subscription)),
+                   discount        = ?V(discount),
+                   account_balance = ?V(account_balance)};
 
+json_to_record(subscription, null) -> null;
 json_to_record(subscription, DecodedResult) ->
   #stripe_subscription{status               = binary_to_atom(?V(status), utf8),
                        current_period_start = ?V(current_period_start),
@@ -200,6 +220,7 @@ json_to_record(subscription, DecodedResult) ->
                        quantity             = ?V(quantity),
                        plan                 = proplist_to_plan(?V(plan))}.
 
+proplist_to_card(null) -> null;
 proplist_to_card(Card) ->
   DecodedResult = Card,
   #stripe_card{last4               = ?V(last4),
@@ -298,6 +319,7 @@ env(What, Default) ->
   end.
 
 -spec gen_args(proplist()) -> string().
+gen_args([]) -> "";
 gen_args(Fields) when is_list(Fields) andalso is_tuple(hd(Fields)) ->
   mochiweb_util:urlencode(Fields).
 
@@ -306,9 +328,9 @@ gen_url(Action) when is_atom(Action) ->
 gen_url(Action) when is_list(Action) ->
   "https://api.stripe.com/v1/" ++ Action.
 
-gen_customer_update_url(CustomerId) when is_binary(CustomerId) ->
-  gen_customer_update_url(binary_to_list(CustomerId));
-gen_customer_update_url(CustomerId) when is_list(CustomerId) ->
+gen_customer_url(CustomerId) when is_binary(CustomerId) ->
+  gen_customer_url(binary_to_list(CustomerId));
+gen_customer_url(CustomerId) when is_list(CustomerId) ->
   "https://api.stripe.com/v1/customers/" ++ CustomerId.
 
 gen_subscription_url(Customer) when is_binary(Customer) ->
