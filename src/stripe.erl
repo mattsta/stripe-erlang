@@ -197,12 +197,18 @@ json_to_record(token, DecodedResult) ->
                 card = proplist_to_card(?V(card))};
 
 json_to_record(customer, DecodedResult) ->
-  #stripe_customer{id          = ?V(id),
-                   description = ?V(description),
-                   livemode    = ?V(livemode),
-                   created     = ?V(created),
-                   active_card = proplist_to_card(?V(active_card))};
+  #stripe_customer{id              = ?V(id),
+                   description     = ?V(description),
+                   livemode        = ?V(livemode),
+                   created         = ?V(created),
+                   active_card     = proplist_to_card(?V(active_card)),
+                   email           = ?V(email),
+                   delinquent      = ?V(delinquent),
+                   subscription    = json_to_record(subscription, ?V(subscription)),
+                   discount        = ?V(discount),
+                   account_balance = ?V(account_balance)};
 
+json_to_record(subscription, null) -> null;
 json_to_record(subscription, DecodedResult) ->
   #stripe_subscription{status               = binary_to_atom(?V(status), utf8),
                        current_period_start = ?V(current_period_start),
