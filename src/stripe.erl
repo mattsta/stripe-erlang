@@ -2,7 +2,7 @@
 
 -export([token_create/10, customer_create/3, customer_get/1, customer_update/3]).
 -export([charge_customer/4, charge_card/4]).
--export([subscription_update/5, subscription_cancel/2]).
+-export([subscription_update/5, subscription_update/6, subscription_cancel/2]).
 -export([ipn/1]).
 
 -include("stripe.hrl").
@@ -81,10 +81,13 @@ token_create(CardNumber, ExpMon, ExpYr, Cvc,
 %%% subscription updating/creation and removal
 %%%--------------------------------------------------------------------
 subscription_update(Customer, Plan, Coupon, Prorate, TrialEnd) ->
+  subscription_update(Customer, Plan, Coupon, Prorate, TrialEnd, "").
+subscription_update(Customer, Plan, Coupon, Prorate, TrialEnd, Quantity) ->
   Fields = [{"plan", Plan},
             {"coupon", Coupon},
             {"prorate", Prorate},
-            {"trial_end", TrialEnd}],
+            {"trial_end", TrialEnd},
+            {"quantity", Quantity}],
   OnlyWithValues = [{K, V} || {K, V} <- Fields, V =/= [] andalso V =/= <<>>],
   request_subscription(subscribe, Customer, OnlyWithValues).
 
