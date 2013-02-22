@@ -29,7 +29,7 @@ stripe_test_() ->
 %%%----------------------------------------------------------------------
 create_token() ->
   Result = ?debugTime("Creating token",
-    stripe:token_create("4242424242424242", 12, 2012, 123,
+    stripe:token_create("4242424242424242", 12, 2021, 123,
                         [], [], [], [], [], [])),
   put(current_token, Result#stripe_token.id),
   ?debugFmt("Token ID: ~p~n", [Result#stripe_token.id]),
@@ -93,7 +93,7 @@ verify_default_card(Card, CheckCVC) ->
       check -> ?assertEqual(pass, Card#stripe_card.cvc_check)
   end,
   ?assertEqual(12, Card#stripe_card.exp_month),
-  ?assertEqual(2012, Card#stripe_card.exp_year),
+  ?assertEqual(2021, Card#stripe_card.exp_year),
   ?assertEqual(<<"4242">>, Card#stripe_card.last4),
   ?assertEqual(<<"Visa">>, Card#stripe_card.type).
 
