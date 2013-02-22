@@ -15,6 +15,8 @@ stripe_test_() ->
        fun create_token/0},
      {"Charge Token",
        fun charge_token/0},
+     {"Create Minimum Customer",
+       fun create_min_customer/0},
      {"Create Customer",
        fun create_customer/0},
      {"Get Customer",
@@ -51,6 +53,11 @@ charge_token() ->
   ?assertEqual(false, Result#stripe_charge.refunded),
   ?assertEqual(Desc, Result#stripe_charge.description),
   verify_default_card(Result#stripe_charge.card, check).
+
+create_min_customer() ->
+  Result = ?debugTime("Creating minimum customer",
+    stripe:customer_create("", "", "")),
+  ?debugFmt("Customer ID: ~p~n", [Result#stripe_customer.id]).
 
 create_customer() ->
   create_token(),

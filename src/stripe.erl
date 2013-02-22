@@ -39,7 +39,8 @@ customer_create(Card, Email, Desc) ->
   Fields = [{card, Card},
             {email, Email},
             {description, Desc}],
-  request_customer_create(Fields).
+  OnlyWithValues = [{K, V} || {K, V} <- Fields, V =/= [] andalso V =/= <<>>],
+  request_customer_create(OnlyWithValues).
 
 %%%--------------------------------------------------------------------
 %%% Customer Fetching
@@ -210,6 +211,7 @@ json_to_record(subscription, DecodedResult) ->
                        quantity             = ?V(quantity),
                        plan                 = proplist_to_plan(?V(plan))}.
 
+proplist_to_card(null) -> null;
 proplist_to_card(Card) ->
   DecodedResult = Card,
   #stripe_card{last4               = ?V(last4),
