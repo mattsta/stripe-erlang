@@ -3,9 +3,11 @@ stripe-erlang: stripe client.  erlang flavored.
 
 Status
 ------
-stripe-erlang is a minimal stripe client.  Currently it only supports four
+stripe-erlang is a minimal stripe client.  Currently it only supports nine
 operations: turning a credit card into an opaque token, creating a
-customer with a token, charging a customer, or charging a token.
+customer with a token, charging a customer, charging a token, updating
+a subscription, canceling a subscription, and retrieving customers, events,
+and invoiceitems.
 
 If you need refunds or transaction management, use the delightful stripe.com
 admin interface for now.
@@ -13,7 +15,7 @@ admin interface for now.
 Usage
 -----
 ### Quick Start
-    Eshell V5.8.5  (abort with ^G)
+    Eshell V5.9.3.1  (abort with ^G)
     1> inets:start().
     ok
     2> ssl:start().
@@ -22,24 +24,29 @@ Usage
     ok
     4> rr(stripe).
     [stripe_card,stripe_charge,stripe_customer,stripe_error,
-     stripe_token]
-    5> #stripe_token{id = Token} = stripe:token_create("4242424242424242", 12, 2012, 123, [], [], [], [], [], []).
-    #stripe_token{id = <<"tok_0WwgS4mze5px3I">>,currency = usd,
-                  used = false,amount = 0,livemode = false,
-                 card = #stripe_card{last4 = <<"4242">>,exp_year = 2012,
+     stripe_event,stripe_invoiceitem,stripe_plan,
+     stripe_subscription,stripe_token]
+    5> #stripe_token{id = Token} = stripe:token_create("4242424242424242", 12, 2021, 123, [], [], [], [], [], []).
+    #stripe_token{id = <<"tok_1Lok1HEM0RJlE5">>,
+                  currency = 'Not Returned by API',used = false,
+                  amount = <<"Not Returned by API">>,livemode = false,
+                  card = #stripe_card{last4 = <<"4242">>,exp_year = 2021,
                                       exp_month = 12,type = <<"Visa">>,
-                                      cvc_check = pass,address_line1_check = nil,
-                                      address_zip_check = nil,country = <<"US">>}}
+                                      cvc_check = 'Not Returned by API',
+                                      address_line1_check = 'Not Returned by API',
+                                      address_zip_check = 'Not Returned by API',
+                                      country = <<"US">>}}
     6> stripe:charge_card(5000, usd, Token, "Mah Money").
-    #stripe_charge{id = <<"ch_tuqXu5bKbKAr9x">>,
-                 created = 1320814827,amount = 5000,fee = 0,currency = usd,
+    #stripe_charge{id = <<"ch_1Lok7sGzzioHBA">>,
+                   created = 1361721296,amount = 5000,fee = 175,currency = usd,
                    description = <<"Mah Money">>,livemode = false,paid = true,
-                   refunded = false,
-                   card = #stripe_card{last4 = <<"4242">>,exp_year = 2012,
-                                       exp_month = 12,type = <<"Visa">>,
-                                       cvc_check = pass,address_line1_check = nil,
-                                       address_zip_check = nil,
-                                       country = <<"US">>}}
+                   refunded = false,customer = null,
+                   card = #stripe_card{last4 = <<"4242">>,exp_year = 2021,
+                                   exp_month = 12,type = <<"Visa">>,cvc_check = pass,
+                                   address_line1_check = null,address_zip_check = null,
+                                   country = <<"US">>}}
+
+
 ### Configuration
 You must start `inets` and `ssl` before using `stripe`.
 
@@ -73,7 +80,6 @@ In no specific order:
 * Add tests for error conditions
 * Move from env-specified auth token to something more call specific
   * Options:
-    * parameterized module (stripe:new(AuthToken))
     * Per-call auth token (stripe:charge_card(AuthToken, ...))
     * Leave env, but add per-auth token options
 
@@ -88,3 +94,7 @@ Want to help?  Patches welcome.
   * Add a new `json_to_record` result extractor
   * Add positive and negative tests in `test/stripe_tests.erl`
 * Find a bug.  Fix a bug.
+
+Contributors
+------------
+* Thanks to @stefanrusek for fixing a failing test and expanding functionality
