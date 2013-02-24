@@ -3,7 +3,7 @@
 -export([token_create/10, customer_create/3, customer_get/1, customer_update/3]).
 -export([charge_customer/4, charge_card/4]).
 -export([subscription_update/5, subscription_update/6, subscription_cancel/2]).
--export([ipn/1]).
+-export([customer/1, event/1, invoiceitem/1]).
 
 -include("stripe.hrl").
 
@@ -97,16 +97,34 @@ subscription_cancel(Customer, AtPeriodEnd) when is_boolean(AtPeriodEnd) ->
   request_subscription(unsubscribe, Customer, OnlyWithValues, AtPeriodEnd).
 
 %%%--------------------------------------------------------------------
+%%% event retrieval
+%%%--------------------------------------------------------------------
+event(EventId) ->
+  request_event(EventId).
+
+customer(CustomerId) ->
+  request_customer(CustomerId).
+
+invoiceitem(InvoiceItemId) ->
+  request_invoiceitem(InvoiceItemId).
+
+%%%--------------------------------------------------------------------
 %%% request generation and sending
 %%%--------------------------------------------------------------------
 request_charge(Fields) ->
   request(charges, post, Fields).
 
-request_customer_create(Fields) ->
-  request(customers, post, Fields).
+request_event(EventId) ->
+  request_run(gen_event_url(EventId), get, []).
 
 request_customer(CustomerId) ->
   request_run(gen_customer_url(CustomerId), get, []).
+
+request_invoiceitem(InvoiceItemId) ->
+  request_run(gen_invoiceitem_url(InvoiceItemId), get, []).
+
+request_customer_create(Fields) ->
+  request(customers, post, Fields).
 
 request_customer_update(CustomerId, Fields) ->
   request_run(gen_customer_url(CustomerId), post, Fields).
@@ -135,9 +153,9 @@ request_run(URL, Method, Fields) ->
   Body = gen_args(Fields),
   Request = case Method of
               % get and delete are body-less http requests
-              get -> {URL, Headers};
-              deleted -> {URL, Headers};
-              _ -> {URL, Headers, Type, Body}
+                 get -> {URL, Headers};
+              delete -> {URL, Headers};
+                   _ -> {URL, Headers, Type, Body}
             end,
   Requested = httpc:request(Method, Request, [], []),
   resolve(Requested).
@@ -153,7 +171,7 @@ resolve({error, Reason}) ->
   {error, Reason}.
 
 -spec resolve_status(pos_integer(), json()) ->
-    #stripe_card{} | #stripe_token{} |
+    #stripe_card{} | #stripe_token{} | #stripe_event{} |
     #stripe_customer{} | #stripe_error{}.
 % success range conditions stolen from stripe-python
 resolve_status(HTTPStatus, SuccessBody) when
@@ -165,13 +183,28 @@ resolve_status(HTTPStatus, ErrorBody) ->
 %%%--------------------------------------------------------------------
 %%% Json to local type object records
 %%%--------------------------------------------------------------------
+-define(NRAPI, <<"Not Returned by API">>).
 -define(V(X), proplists:get_value(atom_to_binary(X, utf8),
-                                  DecodedResult, <<"Not Returned by API">>)).
+                                  DecodedResult, ?NRAPI)).
 
+json_to_record(Json) when is_list(Json) andalso is_tuple(hd(Json)) ->
+  case proplists:get_value(<<"object">>, Json) of
+    <<"event">> -> json_to_event_record(Json);
+          Found -> json_to_record(binary_to_atom(Found, utf8), Json)
+  end;
 json_to_record(Body) when is_list(Body) orelse is_binary(Body) ->
   DecodedResult = mochijson2:decode(Body, [{format, proplist}]),
-  Type = proplists:get_value(<<"object">>, DecodedResult),
-  json_to_record(binary_to_existing_atom(Type, utf8), DecodedResult).
+  json_to_record(DecodedResult).
+
+json_to_event_record(DecodedResult) ->
+  Data = ?V(data),
+  Object = proplists:get_value(<<"object">>, Data),
+  ObjectName = proplists:get_value(<<"object">>, Object),
+  DataType = binary_to_atom(ObjectName, utf8),
+  #stripe_event{id      = ?V(id),
+                type    = ?V(type),
+                created = ?V(created),
+                data    = json_to_record(DataType, Object)}.
 
 % Yes, these are verbose and dumb because we don't have runtime record/object
 % capabilities.  In a way, it's nice being explicit up front.
@@ -186,6 +219,7 @@ json_to_record(charge, DecodedResult) ->
                  livemode     = ?V(livemode),
                  paid         = ?V(paid),
                  refunded     = ?V(refunded),
+                 customer     = ?V(customer),
                  card         = proplist_to_card(?V(card))};
 
 json_to_record(token, DecodedResult) ->
@@ -209,7 +243,7 @@ json_to_record(customer, DecodedResult) ->
                    account_balance = ?V(account_balance)};
 
 json_to_record(subscription, null) -> null;
-json_to_record(subscription, DecodedResult) ->
+json_to_record(subscription, DecodedResult) when is_list(DecodedResult) ->
   #stripe_subscription{status               = binary_to_atom(?V(status), utf8),
                        current_period_start = ?V(current_period_start),
                        current_period_end   = ?V(current_period_end),
@@ -218,7 +252,19 @@ json_to_record(subscription, DecodedResult) ->
                        customer             = ?V(customer),
                        start                = ?V(start),
                        quantity             = ?V(quantity),
-                       plan                 = proplist_to_plan(?V(plan))}.
+                       plan                 = proplist_to_plan(?V(plan))};
+
+json_to_record(invoiceitem, DecodedResult) ->
+  #stripe_invoiceitem{id           = ?V(id),
+                      amount       = ?V(amount),
+                      currency     = binary_to_atom(?V(currency), utf8),
+                      customer     = ?V(customer),
+                      date         = ?V(date),
+                      description  = ?V(description),
+                      proration    = ?V(proration)};
+
+json_to_record(Type, DecodedResult) ->
+  {not_implemented_yet, Type, DecodedResult}.
 
 proplist_to_card(null) -> null;
 proplist_to_card(Card) ->
@@ -271,28 +317,6 @@ json_to_error(ErrCode, ErrCodeMeaning, Body) ->
                 param   = ?V(param)}.
 
 %%%--------------------------------------------------------------------
-%%% Simple IPN decoding
-%%%--------------------------------------------------------------------
-ipn(Json) ->
-  Decoded = mochijson2:decode(Json, [{format, proplist}]),
-  Event = proplists:get_value(<<"event">>, Decoded),
-  json_to_ipn_record(binary_to_existing_atom(Event, utf8), Decoded).
-
--define(C(X), proplists:get_value(<<"customer">>, DecodedResult, nil)).
-json_to_ipn_record(recurring_payment_failed, DecodedResult) ->
-  {payment_failed, ?C(DecodedResult), DecodedResult};
-json_to_ipn_record(invoice_ready, DecodedResult) ->
-  {invoice_ready, ?C(DecodedResult), DecodedResult};
-json_to_ipn_record(recurring_payment_succeeded, DecodedResult) ->
-  {subscribe, ?C(DecodedResult), DecodedResult};
-json_to_ipn_record(subscription_trial_ending, DecodedResult) ->
-  {trial_ending, ?C(DecodedResult), DecodedResult};
-json_to_ipn_record(subscription_final_payment_attempt_failed, DecodedResult) ->
-  {subscription_failure, ?C(DecodedResult), DecodedResult};
-json_to_ipn_record(ping, _) ->
-  ping.
-
-%%%--------------------------------------------------------------------
 %%% value helpers
 %%%--------------------------------------------------------------------
 ua_json() ->
@@ -333,7 +357,17 @@ gen_customer_url(CustomerId) when is_binary(CustomerId) ->
 gen_customer_url(CustomerId) when is_list(CustomerId) ->
   "https://api.stripe.com/v1/customers/" ++ CustomerId.
 
+gen_invoiceitem_url(InvoiceItemId) when is_binary(InvoiceItemId) ->
+  gen_customer_url(binary_to_list(InvoiceItemId));
+gen_invoiceitem_url(InvoiceItemId) when is_list(InvoiceItemId) ->
+  "https://api.stripe.com/v1/invoiceitems/" ++ InvoiceItemId.
+
 gen_subscription_url(Customer) when is_binary(Customer) ->
   gen_subscription_url(binary_to_list(Customer));
 gen_subscription_url(Customer) when is_list(Customer) ->
   "https://api.stripe.com/v1/customers/" ++ Customer ++ "/subscription".
+
+gen_event_url(EventId) when is_binary(EventId) ->
+  gen_event_url(binary_to_list(EventId));
+gen_event_url(EventId) when is_list(EventId) ->
+  "https://api.stripe.com/v1/events/" ++ EventId.

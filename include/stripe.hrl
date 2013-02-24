@@ -7,6 +7,7 @@
 -type price()        :: 50..500000000.  % valid charge prices. $0.50 to $5M.
 -type currency()     :: usd.
 -type customer_id()  :: binary(). % cu_* | cus_*  (docs show both in use)
+-type plan_id()      :: binary(). % user specified plan ID
 -type charge_id()    :: binary(). % ch_*
 -type token_id()     :: binary(). % tok_*
 -type invoiceitem_id() :: binary(). % ii_*
@@ -20,6 +21,8 @@
 -type credit_provider() :: binary().
 -type stripe_object_name() :: charge | customer | invoice | invoiceitem |
                               plan | token.
+-type event_id() :: binary() | string().
+-type event_type() :: binary() | string().
 
 % Endpoints
 -type action() :: charges | customers | tokens.
@@ -71,6 +74,7 @@
                         livemode    :: boolean(),
                         paid        :: boolean(),
                         refunded    :: boolean(),
+                        customer    :: customer_id(),
                         card        :: #stripe_card{}
                       }).
 
@@ -82,7 +86,7 @@
                        card      :: #stripe_card{}
                       }).
 
--record(stripe_plan, {id             :: customer_id(),
+-record(stripe_plan, {id             :: plan_id(),
                       currency       :: currency(),
                       interval_count :: pos_integer(),
                       name           :: binary(),
@@ -113,3 +117,16 @@
                           discount        :: amount(),
                           account_balance :: amount()
                          }).
+
+-record(stripe_event, {id      :: event_id(),
+                       type    :: event_type(),
+                       created :: epoch(),
+                       data}).
+
+-record(stripe_invoiceitem, {id          :: invoice_id(),
+                             amount      :: amount(),
+                             currency    :: currency(),
+                             customer    :: customer_id(),
+                             date        :: epoch(),
+                             description :: binary(),
+                             proration   :: boolean()}).
