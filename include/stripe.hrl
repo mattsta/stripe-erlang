@@ -12,6 +12,7 @@
 -type token_id()     :: binary(). % tok_*
 -type invoiceitem_id() :: binary(). % ii_*
 -type invoice_id()     :: binary(). % in_*
+-type name()         :: binary() | string().
 -type desc()         :: binary() | string().
 -type email()        :: binary() | string().
 -type json()         :: tuple().
@@ -55,7 +56,8 @@
 %%%--------------------------------------------------------------------
 %%% Records / Stripe Objects
 %%%--------------------------------------------------------------------
--record(stripe_card, {last4      :: binary(),
+-record(stripe_card, {name       :: name(),
+                      last4      :: binary(),
                       exp_year   :: 2011..3000,
                       exp_month  :: 1..12,
                       type       :: credit_provider(),
@@ -98,6 +100,8 @@
 -record(stripe_subscription, {status        :: atom(),
                               current_period_start :: epoch(),
                               current_period_end   :: epoch(),
+                              trial_start          :: epoch(),
+                              trial_end            :: epoch(),
                               ended_at             :: epoch(),
                               canceled_at          :: epoch(),
                               customer             :: customer_id(),

@@ -247,6 +247,8 @@ json_to_record(subscription, DecodedResult) when is_list(DecodedResult) ->
   #stripe_subscription{status               = binary_to_atom(?V(status), utf8),
                        current_period_start = ?V(current_period_start),
                        current_period_end   = ?V(current_period_end),
+                       trial_start          = ?V(trial_start),
+                       trial_end            = ?V(trial_end),
                        ended_at             = ?V(ended_at),
                        canceled_at          = ?V(canceled_at),
                        customer             = ?V(customer),
@@ -269,7 +271,8 @@ json_to_record(Type, DecodedResult) ->
 proplist_to_card(null) -> null;
 proplist_to_card(Card) ->
   DecodedResult = Card,
-  #stripe_card{last4               = ?V(last4),
+  #stripe_card{name                = ?V(name),
+               last4               = ?V(last4),
                exp_month           = ?V(exp_month),
                exp_year            = ?V(exp_year),
                type                = ?V(type),
