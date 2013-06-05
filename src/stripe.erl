@@ -39,8 +39,7 @@ customer_create(Card, Email, Desc) ->
   Fields = [{card, Card},
             {email, Email},
             {description, Desc}],
-  OnlyWithValues = [{K, V} || {K, V} <- Fields, V =/= [] andalso V =/= <<>>],
-  request_customer_create(OnlyWithValues).
+  request_customer_create(Fields).
 
 %%%--------------------------------------------------------------------
 %%% Customer Fetching
@@ -56,8 +55,7 @@ customer_get(CustomerId) ->
 customer_update(CustomerId, Token, Email) ->
   Fields = [{"card", Token},
             {"email", Email}],
-  OnlyWithValues = [{K, V} || {K, V} <- Fields, V =/= [] andalso V =/= <<>>],
-  request_customer_update(CustomerId, OnlyWithValues).
+  request_customer_update(CustomerId, Fields).
 
 %%%--------------------------------------------------------------------
 %%% Token Generation
@@ -74,8 +72,7 @@ token_create(CardNumber, ExpMon, ExpYr, Cvc,
             {"card[address_zip]", Zip},
             {"card[address_state]", State},
             {"card[address_country]", Country}],
-  OnlyWithValues = [{K, V} || {K, V} <- Fields, V =/= [] andalso V =/= <<>>],
-  request_token_create(OnlyWithValues).
+  request_token_create(Fields).
 
 %%%--------------------------------------------------------------------
 %%% subscription updating/creation and removal
@@ -88,13 +85,11 @@ subscription_update(Customer, Plan, Coupon, Prorate, TrialEnd, Quantity) ->
             {"prorate", Prorate},
             {"trial_end", TrialEnd},
             {"quantity", Quantity}],
-  OnlyWithValues = [{K, V} || {K, V} <- Fields, V =/= [] andalso V =/= <<>>],
-  request_subscription(subscribe, Customer, OnlyWithValues).
+  request_subscription(subscribe, Customer, Fields).
 
 subscription_cancel(Customer, AtPeriodEnd) when is_boolean(AtPeriodEnd) ->
   Fields = [{"at_period_end", AtPeriodEnd}],
-  OnlyWithValues = [{K, V} || {K, V} <- Fields, V =/= [] andalso V =/= <<>>],
-  request_subscription(unsubscribe, Customer, OnlyWithValues, AtPeriodEnd).
+  request_subscription(unsubscribe, Customer, Fields, AtPeriodEnd).
 
 %%%--------------------------------------------------------------------
 %%% event retrieval
@@ -343,7 +338,8 @@ env(What, Default) ->
 -spec gen_args(proplist()) -> string().
 gen_args([]) -> "";
 gen_args(Fields) when is_list(Fields) andalso is_tuple(hd(Fields)) ->
-  mochiweb_util:urlencode(Fields).
+  OnlyWithValues = [{K, V} || {K, V} <- Fields, V =/= [] andalso V =/= <<>>],
+  mochiweb_util:urlencode(OnlyWithValues).
 
 gen_url(Action) when is_atom(Action) ->
   gen_url(atom_to_list(Action));
