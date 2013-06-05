@@ -224,9 +224,7 @@ json_to_record(charge, DecodedResult) ->
 
 json_to_record(token, DecodedResult) ->
   #stripe_token{id        = ?V(id),
-                currency  = binary_to_atom(?V(currency), utf8),
                 used      = ?V(used),
-                amount    = ?V(amount),
                 livemode  = ?V(livemode),
                 card = proplist_to_card(?V(card))};
 

@@ -79,9 +79,7 @@
                       }).
 
 -record(stripe_token, {id        :: token_id(),
-                       currency  :: currency(),
                        used      :: boolean(),
-                       amount    :: amount(),
                        livemode  :: boolean(),
                        card      :: #stripe_card{}
                       }).
