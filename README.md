@@ -3,7 +3,7 @@ stripe-erlang: stripe client.  erlang flavored.
 
 Status
 ------
-stripe-erlang is a minimal stripe client.  Currently it only supports nine
+stripe-erlang is a minimal stripe client.  Currently we support these
 operations: turning a credit card into an opaque token, turning a bank account
 into an opaque token, creating a customer with a token,
 charging a customer, charging a token, creating a pay-out recipient,
