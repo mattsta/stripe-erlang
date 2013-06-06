@@ -264,7 +264,7 @@ json_to_record(charge, DecodedResult) ->
                  created      = ?V(created),
                  amount       = ?V(amount),
                  fee          = ?V(fee),
-                 currency     = binary_to_atom(?V(currency), utf8),
+                 currency     = check_to_atom(?V(currency)),
                  description  = ?V(description),
                  livemode     = ?V(livemode),
                  paid         = ?V(paid),
@@ -306,7 +306,7 @@ json_to_record(coupon, DecodedResult) ->
   #stripe_coupon{id                 = ?V(id),
                  percent_off        = ?V(percent_off),
                  amount_off         = ?V(amount_off),
-                 currency           = binary_to_atom(?V(currency), utf8),
+                 currency           = check_to_atom(?V(currency)),
                  duration           = ?V(duration),
                  redeem_by          = ?V(redeem_by),
                  max_redemptions    = ?V(max_redemptions),
@@ -316,7 +316,7 @@ json_to_record(coupon, DecodedResult) ->
 
 json_to_record(subscription, null) -> null;
 json_to_record(subscription, DecodedResult) when is_list(DecodedResult) ->
-  #stripe_subscription{status               = binary_to_atom(?V(status), utf8),
+  #stripe_subscription{status               = check_to_atom(?V(status)),
                        current_period_start = ?V(current_period_start),
                        current_period_end   = ?V(current_period_end),
                        trial_start          = ?V(trial_start),
@@ -331,7 +331,7 @@ json_to_record(subscription, DecodedResult) when is_list(DecodedResult) ->
 json_to_record(invoiceitem, DecodedResult) ->
   #stripe_invoiceitem{id           = ?V(id),
                       amount       = ?V(amount),
-                      currency     = binary_to_atom(?V(currency), utf8),
+                      currency     = check_to_atom(?V(currency)),
                       customer     = ?V(customer),
                       date         = ?V(date),
                       description  = ?V(description),
@@ -380,7 +380,7 @@ proplist_to_card(Card) ->
 proplist_to_plan(Plan) ->
   DecodedResult = Plan,
   #stripe_plan{id             = ?V(id),
-               currency       = binary_to_atom(?V(currency), utf8),
+               currency       = check_to_atom(?V(currency)),
                interval       = ?V(interval),
                interval_count = ?V(interval_count),
                name           = ?V(name),
@@ -422,8 +422,8 @@ json_to_error(ErrCode, Body) ->
 json_to_error(ErrCode, ErrCodeMeaning, Body) ->
   PreDecoded = mochijson2:decode(Body, [{format, proplist}]),
   DecodedResult = proplists:get_value(<<"error">>, PreDecoded),
-  #stripe_error{type    = binary_to_atom(?V(type), utf8),
-                code    = binary_to_atom(?V(code), utf8),
+  #stripe_error{type    = check_to_atom(?V(type)),
+                code    = check_to_atom(?V(code)),
                 http_error_code = ErrCode,
                 http_error_code_meaning = ErrCodeMeaning,
                 message = ?V(message),
