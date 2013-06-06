@@ -1,9 +1,12 @@
 -module(stripe).
 
--export([token_create/10, customer_create/3, customer_get/1, customer_update/3]).
+-export([token_create/10, token_create_bank/3]).
+-export([customer_create/3, customer_get/1, customer_update/3]).
 -export([charge_customer/4, charge_card/4]).
 -export([subscription_update/5, subscription_update/6, subscription_cancel/2]).
 -export([customer/1, event/1, invoiceitem/1]).
+-export([recipient_create/6, recipient_update/6]).
+-export([transfer_create/5, transfer_cancel/1]).
 
 -include("stripe.hrl").
 
@@ -74,6 +77,12 @@ token_create(CardNumber, ExpMon, ExpYr, Cvc,
             {"card[address_country]", Country}],
   request_token_create(Fields).
 
+token_create_bank(Country, RoutingNumber, AccountNumber) ->
+  Fields = [{"bank_account[country]", Country},
+            {"bank_account[routing_number]", RoutingNumber},
+            {"bank_account[account_number]", AccountNumber}],
+  request_token_create(Fields).
+
 %%%--------------------------------------------------------------------
 %%% subscription updating/creation and removal
 %%%--------------------------------------------------------------------
@@ -90,6 +99,40 @@ subscription_update(Customer, Plan, Coupon, Prorate, TrialEnd, Quantity) ->
 subscription_cancel(Customer, AtPeriodEnd) when is_boolean(AtPeriodEnd) ->
   Fields = [{"at_period_end", AtPeriodEnd}],
   request_subscription(unsubscribe, Customer, Fields, AtPeriodEnd).
+
+%%%--------------------------------------------------------------------
+%%% Recipient Management
+%%%--------------------------------------------------------------------
+recipient_create(Name, Type, TaxId, Bank, Email, Desc) ->
+  Fields = [{name, Name},
+            {type, Type},
+            {tax_id, TaxId},
+            {bank_account, Bank},
+            {email, Email},
+            {description, Desc}],
+  request_recipient_create(Fields).
+
+recipient_update(RecipientId, Name, TaxId, Bank, Email, Desc) ->
+  Fields = [{name, Name},
+            {tax_id, TaxId},
+            {bank_account, Bank},
+            {email, Email},
+            {description, Desc}],
+  request_recipient_update(RecipientId, Fields).
+
+%%%--------------------------------------------------------------------
+%%% Transfers (Payout) Management
+%%%--------------------------------------------------------------------
+transfer_create(Amount, Currency, RecipientId, Desc, StatementDesc) ->
+  Fields = [{amount, Amount},
+            {currency, Currency},
+            {recipient, RecipientId},
+            {description, Desc},
+            {statement_descriptor, StatementDesc}],
+  request_transfer_create(Fields).
+
+transfer_cancel(TransferId) ->
+  request_transfer_cancel(TransferId).
 
 %%%--------------------------------------------------------------------
 %%% event retrieval
@@ -126,6 +169,18 @@ request_customer_update(CustomerId, Fields) ->
 
 request_token_create(Fields) ->
   request(tokens, post, Fields).
+
+request_recipient_create(Fields) ->
+  request(recipients, post, Fields).
+
+request_recipient_update(RecipientId, Fields) ->
+  request_run(gen_recipient_url(RecipientId), post, Fields).
+
+request_transfer_create(Fields) ->
+  request(transfers, post, Fields).
+
+request_transfer_cancel(TransferId) ->
+  request_run(gen_transfer_cancel_url(TransferId), post, []).
 
 request(Action, post, Fields) ->
   URL = gen_url(Action),
@@ -221,7 +276,8 @@ json_to_record(token, DecodedResult) ->
   #stripe_token{id        = ?V(id),
                 used      = ?V(used),
                 livemode  = ?V(livemode),
-                card = proplist_to_card(?V(card))};
+                card = proplist_to_card(?V(card)),
+                bank_account = proplist_to_bank_account(?V(bank_account))};
 
 json_to_record(customer, DecodedResult) ->
   #stripe_customer{id              = ?V(id),
@@ -256,10 +312,33 @@ json_to_record(invoiceitem, DecodedResult) ->
                       description  = ?V(description),
                       proration    = ?V(proration)};
 
+json_to_record(recipient, DecodedResult) ->
+  #stripe_recipient{id           = ?V(id),
+                    created      = ?V(created),
+                    type         = check_to_atom(?V(type)),
+                    active_account = proplist_to_bank_account(?V(active_account)),
+                    verified     = ?V(verified),
+                    description  = ?V(description),
+                    name         = ?V(name),
+                    email        = ?V(email)};
+
+json_to_record(transfer, DecodedResult) ->
+  #stripe_transfer{id           = ?V(id),
+                   amount       = ?V(amount),
+                   currency     = check_to_atom(?V(currency)),
+                   date         = ?V(date),
+                   fee          = ?V(fee),
+                   status       = check_to_atom(?V(status)),
+                   account      = proplist_to_bank_account(?V(account)),
+                   description  = ?V(description),
+                   recipient    = ?V(recipient),
+                   statement_descriptor = ?V(statement_descriptor)};
+
 json_to_record(Type, DecodedResult) ->
   {not_implemented_yet, Type, DecodedResult}.
 
 proplist_to_card(null) -> null;
+proplist_to_card(A) when is_binary(A) -> A;
 proplist_to_card(Card) ->
   DecodedResult = Card,
   #stripe_card{last4               = ?V(last4),
@@ -281,7 +360,21 @@ proplist_to_plan(Plan) ->
                amount         = ?V(amount),
                livemode       = ?V(livemode)}.
 
+proplist_to_bank_account(null) -> null;
+proplist_to_bank_account(A) when is_binary(A) -> A;
+proplist_to_bank_account(BankAccount) ->
+  DecodedResult = BankAccount,
+  #stripe_bank_account{fingerprint = ?V(fingerprint),
+                       bank_name  = ?V(bank_name),
+                       last4      = ?V(last4),
+                       country    = ?V(country),
+                       validated  = ?V(validated),
+                       description = ?V(description),
+                       recipient  = ?V(recipient),
+                       statement_descriptor = ?V(statement_descriptor)}.
+
 check_to_atom(null) -> null;
+check_to_atom(A) when is_atom(A) -> A;
 check_to_atom(Check) when is_binary(Check) -> binary_to_atom(Check, utf8).
 
 % error range conditions stolen from stripe-python
@@ -350,6 +443,16 @@ gen_customer_url(CustomerId) when is_binary(CustomerId) ->
   gen_customer_url(binary_to_list(CustomerId));
 gen_customer_url(CustomerId) when is_list(CustomerId) ->
   "https://api.stripe.com/v1/customers/" ++ CustomerId.
+
+gen_recipient_url(RecipientId) when is_binary(RecipientId) ->
+  gen_recipient_url(binary_to_list(RecipientId));
+gen_recipient_url(RecipientId) when is_list(RecipientId) ->
+  "https://api.stripe.com/v1/recipients/" ++ RecipientId.
+
+gen_transfer_cancel_url(TransferId) when is_binary(TransferId) ->
+  gen_transfer_cancel_url(binary_to_list(TransferId));
+gen_transfer_cancel_url(TransferId) when is_list(TransferId) ->
+  "https://api.stripe.com/v1/transfers/" ++ TransferId ++ "/cancel".
 
 gen_invoiceitem_url(InvoiceItemId) when is_binary(InvoiceItemId) ->
   gen_customer_url(binary_to_list(InvoiceItemId));
