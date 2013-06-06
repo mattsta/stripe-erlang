@@ -288,14 +288,37 @@ json_to_record(customer, DecodedResult) ->
                    email           = ?V(email),
                    delinquent      = ?V(delinquent),
                    subscription    = json_to_record(subscription, ?V(subscription)),
-                   discount        = ?V(discount),
+                   discount        = json_to_record(discount, ?V(discount)),
                    account_balance = ?V(account_balance)};
+
+json_to_record(discount, null) -> null;
+json_to_record(discount, DecodedResult) ->
+  #stripe_discount{coupon   = json_to_record(coupon, ?V(coupon)),
+                   start    = ?V(start),
+                   'end'    = ?V('end'),
+                   customer = ?V(customer)
+                  };
+
+json_to_record(coupon, null) -> null;
+json_to_record(coupon, DecodedResult) ->
+  #stripe_coupon{id                 = ?V(id),
+                 percent_off        = ?V(percent_off),
+                 amount_off         = ?V(amount_off),
+                 currentcy          = binary_to_atom(?V(currency), utf8),
+                 duration           = ?V(duration),
+                 redeem_by          = ?V(redeem_by),
+                 max_redemptions    = ?V(max_redemptions),
+                 times_redeemed     = ?V(times_redeemed),
+                 duration_in_months = ?V(duration_in_months)
+                };
 
 json_to_record(subscription, null) -> null;
 json_to_record(subscription, DecodedResult) when is_list(DecodedResult) ->
   #stripe_subscription{status               = binary_to_atom(?V(status), utf8),
                        current_period_start = ?V(current_period_start),
                        current_period_end   = ?V(current_period_end),
+                       trial_start          = ?V(trial_start),
+                       trial_end            = ?V(trial_end),
                        ended_at             = ?V(ended_at),
                        canceled_at          = ?V(canceled_at),
                        customer             = ?V(customer),
@@ -335,13 +358,15 @@ json_to_record(transfer, DecodedResult) ->
                    statement_descriptor = ?V(statement_descriptor)};
 
 json_to_record(Type, DecodedResult) ->
+  error_logger:add_report_handler({unimplemented, ?MODULE, json_to_record, Type, DecodedResult}),
   {not_implemented_yet, Type, DecodedResult}.
 
 proplist_to_card(null) -> null;
 proplist_to_card(A) when is_binary(A) -> A;
 proplist_to_card(Card) ->
   DecodedResult = Card,
-  #stripe_card{last4               = ?V(last4),
+  #stripe_card{name                = ?V(name),
+               last4               = ?V(last4),
                exp_month           = ?V(exp_month),
                exp_year            = ?V(exp_year),
                type                = ?V(type),

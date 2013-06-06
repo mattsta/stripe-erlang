@@ -7,6 +7,7 @@
 -type price()        :: 50..500000000.  % valid charge prices. $0.50 to $5M.
 -type currency()     :: usd.
 -type customer_id()  :: binary(). % cu_* | cus_*  (docs show both in use)
+-type coupon_id()    :: binary(). % user specidied coupon ID
 -type plan_id()      :: binary(). % user specified plan ID
 -type charge_id()    :: binary(). % ch_*
 -type token_id()     :: binary(). % tok_* (card) or btok_* (bank)
@@ -67,7 +68,8 @@
 %%%--------------------------------------------------------------------
 %%% Records / Stripe Objects
 %%%--------------------------------------------------------------------
--record(stripe_card, {last4      :: binary(),
+-record(stripe_card, {name       :: name(),
+                      last4      :: binary(),
                       exp_year   :: 2011..3000,
                       exp_month  :: 1..12,
                       type       :: credit_provider(),
@@ -119,6 +121,8 @@
 -record(stripe_subscription, {status        :: atom(),
                               current_period_start :: epoch(),
                               current_period_end   :: epoch(),
+                              trial_start          :: epoch(),
+                              trial_end            :: epoch(),
                               ended_at             :: epoch(),
                               canceled_at          :: epoch(),
                               customer             :: customer_id(),
@@ -126,6 +130,23 @@
                               quantity             :: number(),
                               plan                 :: #stripe_plan{}
                              }).
+
+-record(stripe_coupon, {id                 :: coupon_id(),
+                        percent_off        :: amount(),
+                        amount_off         :: amount(),
+                        currentcy          :: currency(),
+                        duration           :: amount(),
+                        redeem_by          :: epoch(),
+                        max_redemptions    :: amount(),
+                        times_redeemed     :: amount(),
+                        duration_in_months :: amount()
+                       }).
+
+-record(stripe_discount, {coupon   :: #stripe_coupon{},
+                          start    :: epoch(),
+                          'end'    :: epoch(),
+                          customer :: customer_id()
+                         }).
 
 -record(stripe_customer, {id              :: customer_id(),
                           created         :: epoch(),
@@ -135,7 +156,7 @@
                           email           :: email(),
                           delinquent      :: boolean(),
                           subscription    :: #stripe_subscription{},
-                          discount        :: amount(),
+                          discount        :: #stripe_discount{},
                           account_balance :: amount()
                          }).
 
