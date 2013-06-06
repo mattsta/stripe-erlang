@@ -10,7 +10,7 @@
 
 -include("stripe.hrl").
 
--define(VSN_BIN, <<"0.4">>).
+-define(VSN_BIN, <<"0.6.3">>).
 -define(VSN_STR, binary_to_list(?VSN_BIN)).
 
 %%%--------------------------------------------------------------------
