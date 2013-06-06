@@ -7,6 +7,7 @@
 -type price()        :: 50..500000000.  % valid charge prices. $0.50 to $5M.
 -type currency()     :: usd.
 -type customer_id()  :: binary(). % cu_* | cus_*  (docs show both in use)
+-type coupon_id()    :: binary(). % user specidied coupon ID
 -type plan_id()      :: binary(). % user specified plan ID
 -type charge_id()    :: binary(). % ch_*
 -type token_id()     :: binary(). % tok_* (card) or btok_* (bank)
@@ -130,6 +131,23 @@
                               plan                 :: #stripe_plan{}
                              }).
 
+-record(stripe_coupon, {id                 :: coupon_id(),
+                        percent_off        :: amount(),
+                        amount_off         :: amount(),
+                        currentcy          :: currency(),
+                        duration           :: amount(),
+                        redeem_by          :: epoch(),
+                        max_redemptions    :: amount(),
+                        times_redeemed     :: amount(),
+                        duration_in_months :: amount()
+                       }).
+
+-record(stripe_discount, {coupon   :: #stripe_coupon{},
+                          start    :: epoch(),
+                          'end'    :: epoch(),
+                          customer :: customer_id()
+                         }).
+
 -record(stripe_customer, {id              :: customer_id(),
                           created         :: epoch(),
                           description     :: desc(),
@@ -138,7 +156,7 @@
                           email           :: email(),
                           delinquent      :: boolean(),
                           subscription    :: #stripe_subscription{},
-                          discount        :: amount(),
+                          discount        :: #stripe_discount{},
                           account_balance :: amount()
                          }).
 
