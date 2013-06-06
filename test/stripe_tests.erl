@@ -11,8 +11,10 @@ stripe_test_() ->
     fun setup/0,
     fun teardown/1,
     [
-     {"Create Token",
-       fun create_token/0},
+     {"Create Credit Card Token",
+       fun create_token_card/0},
+     {"Create Bank Account Token",
+       fun create_token_bank/0},
      {"Charge Token",
        fun charge_token/0},
      {"Create Minimum Customer",
@@ -24,24 +26,40 @@ stripe_test_() ->
      {"Charge Customer",
        fun charge_customer/0},
      {"Update Customer",
-       fun update_customer/0}
+       fun update_customer/0},
+     {"Create Recipient",
+       fun create_recipient/0},
+     {"Update Recipient",
+       fun update_recipient/0},
+     {"Create Transfer",
+       fun create_transfer/0},
+     {"Cancel Transfer",
+       fun cancel_transfer/0}
     ]
   }.
 
 %%%----------------------------------------------------------------------
 %%% Tests
 %%%----------------------------------------------------------------------
-create_token() ->
-  Result = ?debugTime("Creating token",
+create_token_card() ->
+  Result = ?debugTime("Creating credit card token",
     stripe:token_create("4242424242424242", 12, 2021, 123,
                         [], [], [], [], [], [])),
-  put(current_token, Result#stripe_token.id),
+  put(current_card_token, Result#stripe_token.id),
   ?debugFmt("Token ID: ~p~n", [Result#stripe_token.id]),
   ?assertEqual(false, Result#stripe_token.used),
   verify_default_card(Result#stripe_token.card, nocheck).
 
+create_token_bank() ->
+  T = ?debugTime("Creating bank account token",
+    stripe:token_create_bank("US", "111000025", "000123456789")),
+  BankAccountId = T#stripe_token.id,
+  ?debugFmt("Token ID: ~p~n", [BankAccountId]),
+  put(current_bank_account_token, BankAccountId),
+  ?assertEqual(false, T#stripe_token.used).
+
 charge_token() ->
-  Token = get(current_token),
+  Token = get(current_card_token),
   Desc = <<"MAH CHARGE">>,
   Result = ?debugTime("Charging card",
     stripe:charge_card(65540, usd, Token, Desc)),
@@ -60,8 +78,8 @@ create_min_customer() ->
   ?debugFmt("Customer ID: ~p~n", [Result#stripe_customer.id]).
 
 create_customer() ->
-  create_token(),
-  Token = get(current_token),
+  create_token_card(),
+  Token = get(current_card_token),
   Email = "hokum@pokum.com",
   Desc = "You really don't wanna know",
   Result = ?debugTime("Creating customer",
@@ -92,13 +110,55 @@ charge_customer() ->
   ?assertEqual(false, Result#stripe_charge.refunded).
 
 update_customer() ->
-  create_token(),
-  Token = get(current_token),
+  create_token_card(),
+  Token = get(current_card_token),
   Email = "h222okum@pokum.com",
   Result = ?debugTime("Updating customer",
     stripe:customer_update(get(current_customer), Token, Email)),
   ?debugFmt("Customer ID: ~p~n", [Result#stripe_customer.id]),
   verify_default_card(Result#stripe_customer.active_card, check).
+
+create_recipient() ->
+  % Create a bank account token first so we can create a recipient with a way
+  % to receive payments
+  BankAccountId = get(current_bank_account_token),
+  R = ?debugTime("Creating recipient",
+    stripe:recipient_create("Bob Jones", individual,
+                            "000000000", BankAccountId, "bob@bob.bob", "A Desc")),
+  put(recipient_id, R#stripe_recipient.id),
+  ?debugFmt("Recipient ID: ~p~n", [R#stripe_recipient.id]),
+  ?assertEqual(individual, R#stripe_recipient.type),
+  ?assertEqual(<<"Bob Jones">>, R#stripe_recipient.name),
+  ?assertEqual(true, R#stripe_recipient.verified),
+%  ?assertMatch(null, R#stripe_recipient.active_account),  % only null if no account
+  ?assertEqual(<<"bob@bob.bob">>, R#stripe_recipient.email).
+
+update_recipient() ->
+  RecipientId = get(recipient_id),
+  R = ?debugTime("Updating recipient",
+    stripe:recipient_update(RecipientId, "Bob2 Jones2", [], [], "email2@2.com", [])),
+  ?debugFmt("Recipient ID: ~p~n", [R#stripe_recipient.id]),
+  ?assertEqual(<<"Bob2 Jones2">>, R#stripe_recipient.name),
+  ?assertEqual(<<"email2@2.com">>, R#stripe_recipient.email).
+
+create_transfer() ->
+  T = ?debugTime("Creating transfer",
+    stripe:transfer_create(6500000, usd, get(recipient_id), "Foo", "Prell")),
+  put(transfer_id, T#stripe_transfer.id),
+  ?debugFmt("Transfer ID: ~p~n", [T#stripe_transfer.id]),
+  ?assertEqual(pending, T#stripe_transfer.status),
+  ?assertEqual(6500000, T#stripe_transfer.amount),
+  ?assertEqual(usd, T#stripe_transfer.currency),
+  ?assertEqual(25, T#stripe_transfer.fee).
+
+cancel_transfer() ->
+  TransferId = get(transfer_id),
+  T = ?debugTime("Canceling transfer",
+    stripe:transfer_cancel(TransferId)),
+  ?debugFmt("Transfer ID: ~p~n", [TransferId]),
+  % This goes through but fails because the previous transfer is
+  % considred automatic... or something.
+  ?assertMatch(#stripe_error{}, T).
 
 %%%----------------------------------------------------------------------
 %%% Meta Tests

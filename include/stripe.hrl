@@ -10,12 +10,17 @@
 -type coupon_id()    :: binary(). % user specidied coupon ID
 -type plan_id()      :: binary(). % user specified plan ID
 -type charge_id()    :: binary(). % ch_*
--type token_id()     :: binary(). % tok_*
+-type token_id()     :: binary(). % tok_* (card) or btok_* (bank)
 -type invoiceitem_id() :: binary(). % ii_*
 -type invoice_id()     :: binary(). % in_*
+-type recipient_id() :: binary().   % rp_*
+-type transfer_id()  :: binary().   % tr_*
+-type bank_name()    :: binary() | string().
+-type last4()        :: binary() | string().
 -type name()         :: binary() | string().
 -type desc()         :: binary() | string().
 -type email()        :: binary() | string().
+-type fingerprint()  :: binary() | string().
 -type json()         :: tuple().
 -type country()      :: binary().
 -type epoch()        :: pos_integer().
@@ -25,6 +30,10 @@
                               plan | token.
 -type event_id() :: binary() | string().
 -type event_type() :: binary() | string().
+
+-type token_type() :: card | bank_account.
+
+-type recipient_type() :: individual | corporation.
 
 % Endpoints
 -type action() :: charges | customers | tokens.
@@ -41,6 +50,8 @@
                               params_ok_but_request_failed |
                               notfound | stripe_server_error |
                               stripe_api_error | unknown_error.
+
+-type transfer_status() :: paid | pending | failed.
 
 %%%--------------------------------------------------------------------
 %%% Error
@@ -68,6 +79,15 @@
                       country    :: country()
                      }).
 
+-record(stripe_bank_account, {fingerprint :: fingerprint(),
+                              bank_name   :: bank_name(),
+                              last4       :: last4(),
+                              country     :: country(),
+                              validated   :: boolean(),
+                              description :: desc(),
+                              recipient   :: recipient_id(),
+                              statement_descriptor :: desc()}).
+
 -record(stripe_charge, {id          :: charge_id(),
                         created     :: epoch(),
                         amount      :: price(),
@@ -82,10 +102,10 @@
                       }).
 
 -record(stripe_token, {id        :: token_id(),
-                       currency  :: currency(),
                        used      :: boolean(),
-                       amount    :: amount(),
                        livemode  :: boolean(),
+                       type      :: token_type(),
+                       bank_account :: #stripe_bank_account{},
                        card      :: #stripe_card{}
                       }).
 
@@ -152,3 +172,24 @@
                              date        :: epoch(),
                              description :: binary(),
                              proration   :: boolean()}).
+
+-record(stripe_recipient, {id            :: recipient_id(),
+                           created       :: epoch(),
+                           type          :: recipient_type(),
+                           active_account :: #stripe_bank_account{},
+                           verified      :: boolean(),
+                           description   :: desc(),
+                           name          :: name(),
+                           email         :: email()}).
+
+-record(stripe_transfer, {id             :: transfer_id(),
+                          amount         :: amount(),
+                          currency       :: currency(),
+                          date           :: epoch(),
+                          fee            :: amount(),
+                          status         :: transfer_status(),
+                          account        :: #stripe_bank_account{},
+                          description    :: desc(),
+                          recipient      :: recipient_id(),
+                          statement_descriptor :: desc()}).
+
