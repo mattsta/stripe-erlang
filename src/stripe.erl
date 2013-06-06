@@ -303,10 +303,14 @@ json_to_record(discount, DecodedResult) ->
 % We don't have eunit tests for coupon decoding yet.  Use at your own risk.
 json_to_record(coupon, null) -> null;
 json_to_record(coupon, DecodedResult) ->
+  Currency = case ?V(currency) of
+    null -> null;
+    BinCurrency -> binary_to_atom(BinCurrency, utf8)
+  end,
   #stripe_coupon{id                 = ?V(id),
                  percent_off        = ?V(percent_off),
                  amount_off         = ?V(amount_off),
-                 currency           = binary_to_atom(?V(currency), utf8),
+                 currency           = Currency,
                  duration           = ?V(duration),
                  redeem_by          = ?V(redeem_by),
                  max_redemptions    = ?V(max_redemptions),
