@@ -134,7 +134,7 @@
 -record(stripe_coupon, {id                 :: coupon_id(),
                         percent_off        :: amount(),
                         amount_off         :: amount(),
-                        currentcy          :: currency(),
+                        currency           :: currency(),
                         duration           :: amount(),
                         redeem_by          :: epoch(),
                         max_redemptions    :: amount(),

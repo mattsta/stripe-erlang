@@ -291,6 +291,7 @@ json_to_record(customer, DecodedResult) ->
                    discount        = json_to_record(discount, ?V(discount)),
                    account_balance = ?V(account_balance)};
 
+% We don't have eunit tests for discount decoding yet.  Use at your own risk.
 json_to_record(discount, null) -> null;
 json_to_record(discount, DecodedResult) ->
   #stripe_discount{coupon   = json_to_record(coupon, ?V(coupon)),
@@ -299,12 +300,13 @@ json_to_record(discount, DecodedResult) ->
                    customer = ?V(customer)
                   };
 
+% We don't have eunit tests for coupon decoding yet.  Use at your own risk.
 json_to_record(coupon, null) -> null;
 json_to_record(coupon, DecodedResult) ->
   #stripe_coupon{id                 = ?V(id),
                  percent_off        = ?V(percent_off),
                  amount_off         = ?V(amount_off),
-                 currentcy          = binary_to_atom(?V(currency), utf8),
+                 currency           = binary_to_atom(?V(currency), utf8),
                  duration           = ?V(duration),
                  redeem_by          = ?V(redeem_by),
                  max_redemptions    = ?V(max_redemptions),
