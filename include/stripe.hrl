@@ -15,6 +15,7 @@
 -type invoice_id()     :: binary(). % in_*
 -type recipient_id() :: binary().   % rp_*
 -type transfer_id()  :: binary().   % tr_*
+-type balance_txn()  :: binary().   % txn_*
 -type bank_name()    :: binary() | string().
 -type last4()        :: binary() | string().
 -type name()         :: binary() | string().
@@ -91,7 +92,7 @@
 -record(stripe_charge, {id          :: charge_id(),
                         created     :: epoch(),
                         amount      :: price(),
-                        fee         :: amount(),
+                        balance_transaction :: balance_txn(),
                         currency    :: currency(),
                         description :: desc(),
                         livemode    :: boolean(),
@@ -186,7 +187,7 @@
                           amount         :: amount(),
                           currency       :: currency(),
                           date           :: epoch(),
-                          fee            :: amount(),
+                          balance_transaction :: balance_txn(),
                           status         :: transfer_status(),
                           account        :: #stripe_bank_account{},
                           description    :: desc(),

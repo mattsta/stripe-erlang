@@ -66,7 +66,7 @@ charge_token() ->
   ?debugFmt("Token Charge ID: ~p~n", [Result#stripe_charge.id]),
   ?assertEqual(65540, Result#stripe_charge.amount),
   ?assertEqual(usd, Result#stripe_charge.currency),
-  ?assertEqual(1931, Result#stripe_charge.fee),
+  ?assertEqual(true, is_binary(Result#stripe_charge.balance_transaction)),
   ?assertEqual(true, Result#stripe_charge.paid),
   ?assertEqual(false, Result#stripe_charge.refunded),
   ?assertEqual(Desc, Result#stripe_charge.description),
@@ -105,7 +105,7 @@ charge_customer() ->
   ?assertEqual(Desc, Result#stripe_charge.description),
   ?assertEqual(6221, Result#stripe_charge.amount),
   ?assertEqual(usd, Result#stripe_charge.currency),
-  ?assertEqual(210, Result#stripe_charge.fee),
+  ?assertEqual(true, is_binary(Result#stripe_charge.balance_transaction)),
   ?assertEqual(true, Result#stripe_charge.paid),
   ?assertEqual(false, Result#stripe_charge.refunded).
 
@@ -149,7 +149,7 @@ create_transfer() ->
   ?assertEqual(pending, T#stripe_transfer.status),
   ?assertEqual(6500000, T#stripe_transfer.amount),
   ?assertEqual(usd, T#stripe_transfer.currency),
-  ?assertEqual(25, T#stripe_transfer.fee).
+  ?assertEqual(true, is_binary(T#stripe_transfer.balance_transaction)).
 
 cancel_transfer() ->
   TransferId = get(transfer_id),
