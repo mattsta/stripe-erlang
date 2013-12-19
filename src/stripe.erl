@@ -284,7 +284,6 @@ json_to_record(customer, DecodedResult) ->
                    description     = ?V(description),
                    livemode        = ?V(livemode),
                    created         = ?V(created),
-                   active_card     = proplist_to_card(?V(active_card)),
                    email           = ?V(email),
                    delinquent      = ?V(delinquent),
                    subscription    = json_to_record(subscription, ?V(subscription)),

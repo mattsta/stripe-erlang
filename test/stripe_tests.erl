@@ -86,15 +86,13 @@ create_customer() ->
     stripe:customer_create(Token, Email, Desc)),
   put(current_customer, Result#stripe_customer.id),
   ?debugFmt("Customer ID: ~p~n", [Result#stripe_customer.id]),
-  ?assertEqual(list_to_binary(Desc), Result#stripe_customer.description),
-  verify_default_card(Result#stripe_customer.active_card, check).
+  ?assertEqual(list_to_binary(Desc), Result#stripe_customer.description).
 
 get_customer() ->
   Customer = get(current_customer),
   Result = ?debugTime("Fetching customer",
     stripe:customer_get(Customer)),
-  ?debugFmt("Customer ID: ~p~n", [Result#stripe_customer.id]),
-  verify_default_card(Result#stripe_customer.active_card, check).
+  ?debugFmt("Customer ID: ~p~n", [Result#stripe_customer.id]).
 
 charge_customer() ->
   Customer = get(current_customer),
@@ -115,8 +113,7 @@ update_customer() ->
   Email = "h222okum@pokum.com",
   Result = ?debugTime("Updating customer",
     stripe:customer_update(get(current_customer), Token, Email)),
-  ?debugFmt("Customer ID: ~p~n", [Result#stripe_customer.id]),
-  verify_default_card(Result#stripe_customer.active_card, check).
+  ?debugFmt("Customer ID: ~p~n", [Result#stripe_customer.id]).
 
 create_recipient() ->
   % Create a bank account token first so we can create a recipient with a way

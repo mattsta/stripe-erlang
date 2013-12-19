@@ -153,7 +153,6 @@
                           created         :: epoch(),
                           description     :: desc(),
                           livemode        :: boolean(),
-                          active_card     :: #stripe_card{},
                           email           :: email(),
                           delinquent      :: boolean(),
                           subscription    :: #stripe_subscription{},
