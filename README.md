@@ -69,6 +69,11 @@ Testing
 -------
         rebar eunit skip_deps=true suite=stripe
 
+Stripe sometimes changes API behavior.  Changes in API behavior can cause
+our tests to fail.  If you find failing tests, check their latest API changes at
+[API Upgrades](https://stripe.com/docs/upgrades) then fix the code and/or tests
+to compensate.
+
 Next Steps
 ----------
 In no specific order:
