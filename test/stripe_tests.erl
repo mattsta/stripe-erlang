@@ -179,7 +179,7 @@ setup() ->
   % Prime the inets/ssl code path with a https request to google:
   httpc:request("https://google.com"),
   application:start(stripe),
-  application:set_env(stripe, auth_token, "vtUQeOtUnYr7PGCLQ96Ul4zqpDUO4sOE"),
+  application:set_env(stripe, auth_token, "sk_test_BQokikJOvBiI2HlWgH4olfQ2"),
   ok.
 
 teardown(_) ->
