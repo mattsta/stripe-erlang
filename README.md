@@ -58,7 +58,7 @@ You *must* change this to your private API key before you can receive payments:
      inets:start(),
      ssl:start(),
      application:start(stripe),
-     application:set_env(stripe, auth_token, "vtUQeOtUnYr7PGCLQ96Ul4zqpDUO4sOE").
+     application:set_env(stripe, auth_token, "sk_test_BQokikJOvBiI2HlWgH4olfQ2").
 
 Building
 --------
@@ -84,6 +84,7 @@ In no specific order:
   * Add support for the `fee_details` structure.
   * Add support for the `disputed` flag.
   * Add support for the `failure_message` note.
+  * Add support for multi-valued properties (cards, subscriptions, ...).
 * Add tests for error conditions
 * Move from env-specified auth token to something more call specific
   * Options:
