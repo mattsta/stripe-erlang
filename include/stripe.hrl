@@ -155,7 +155,6 @@
                           livemode        :: boolean(),
                           email           :: email(),
                           delinquent      :: boolean(),
-                          subscription    :: #stripe_subscription{},
                           discount        :: #stripe_discount{},
                           account_balance :: amount()
                          }).

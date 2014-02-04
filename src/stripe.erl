@@ -286,7 +286,6 @@ json_to_record(customer, DecodedResult) ->
                    created         = ?V(created),
                    email           = ?V(email),
                    delinquent      = ?V(delinquent),
-                   subscription    = json_to_record(subscription, ?V(subscription)),
                    discount        = json_to_record(discount, ?V(discount)),
                    account_balance = ?V(account_balance)};
 
