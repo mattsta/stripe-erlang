@@ -359,7 +359,7 @@ json_to_record(transfer, DecodedResult) ->
                    statement_descriptor = ?V(statement_descriptor)};
 
 json_to_record(Type, DecodedResult) ->
-  error_logger:add_report_handler({unimplemented, ?MODULE, json_to_record, Type, DecodedResult}),
+  error_logger:error_msg({unimplemented, ?MODULE, json_to_record, Type, DecodedResult}),
   {not_implemented_yet, Type, DecodedResult}.
 
 proplist_to_card(null) -> null;
