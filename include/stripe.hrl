@@ -5,7 +5,145 @@
 -type proplist()     :: [{term(), term()}].  % predefined in newer releases
 -type amount()       :: pos_integer().  % any amount of money
 -type price()        :: 50..500000000.  % valid charge prices. $0.50 to $5M.
--type currency()     :: usd.
+-type currency()     :: aed | % united arab emirates dirham
+                        afn | % afghan afghani*
+                        all | % albanian lek
+                        amd | % armenian dram
+                        ang | % netherlands antillean gulden
+                        aoa | % angolan kwanza*
+                        ars | % argentine peso*
+                        aud | % australian dollar*
+                        awg | % aruban florin
+                        azn | % azerbaijani manat
+                        bam | % bosnia & herzegovina convertible mark
+                        bbd | % barbadian dollar
+                        bdt | % bangladeshi taka
+                        bgn | % bulgarian lev
+                        bif | % burundian franc
+                        bmd | % bermudian dollar
+                        bnd | % brunei dollar
+                        bob | % bolivian boliviano*
+                        brl | % brazilian real*
+                        bsd | % bahamian dollar
+                        bwp | % botswana pula
+                        bzd | % belize dollar
+                        cad | % canadian dollar*
+                        cdf | % congolese franc
+                        chf | % swiss franc
+                        clp | % chilean peso*
+                        cny | % chinese renminbi yuan
+                        cop | % colombian peso*
+                        crc | % costa rican colón*
+                        cve | % cape verdean escudo*
+                        czk | % czech koruna*
+                        djf | % djiboutian franc*
+                        dkk | % danish krone
+                        dop | % dominican peso
+                        dzd | % algerian dinar
+                        eek | % estonian kroon*
+                        egp | % egyptian pound
+                        etb | % ethiopian birr
+                        eur | % euro
+                        fjd | % fijian dollar
+                        fkp | % falkland islands pound*
+                        gbp | % british pound
+                        gel | % georgian lari
+                        gip | % gibraltar pound
+                        gmd | % gambian dalasi
+                        gnf | % guinean franc*
+                        gtq | % guatemalan quetzal*
+                        gyd | % guyanese dollar
+                        hkd | % hong kong dollar
+                        hnl | % honduran lempira*
+                        hrk | % croatian kuna
+                        htg | % haitian gourde
+                        huf | % hungarian forint
+                        idr | % indonesian rupiah
+                        ils | % israeli new sheqel
+                        inr | % indian rupee*
+                        isk | % icelandic króna
+                        jmd | % jamaican dollar
+                        jpy | % japanese yen
+                        kes | % kenyan shilling
+                        kgs | % kyrgyzstani som
+                        khr | % cambodian riel
+                        kmf | % comorian franc
+                        krw | % south korean won
+                        kyd | % cayman islands dollar
+                        kzt | % kazakhstani tenge
+                        lak | % lao kip*
+                        lbp | % lebanese pound
+                        lkr | % sri lankan rupee
+                        lrd | % liberian dollar
+                        lsl | % lesotho loti
+                        ltl | % lithuanian litas
+                        lvl | % latvian lats
+                        mad | % moroccan dirham
+                        mdl | % moldovan leu
+                        mga | % malagasy ariary
+                        mkd | % macedonian denar
+                        mnt | % mongolian tögrög
+                        mop | % macanese pataca
+                        mro | % mauritanian ouguiya
+                        mur | % mauritian rupee*
+                        mvr | % maldivian rufiyaa
+                        mwk | % malawian kwacha
+                        mxn | % mexican peso*
+                        myr | % malaysian ringgit
+                        mzn | % mozambican metical
+                        nad | % namibian dollar
+                        ngn | % nigerian naira
+                        nio | % nicaraguan córdoba*
+                        nok | % norwegian krone
+                        npr | % nepalese rupee
+                        nzd | % new zealand dollar
+                        pab | % panamanian balboa*
+                        pen | % peruvian nuevo sol*
+                        pgk | % papua new guinean kina
+                        php | % philippine peso
+                        pkr | % pakistani rupee
+                        pln | % polish złoty
+                        pyg | % paraguayan guaraní*
+                        qar | % qatari riyal
+                        ron | % romanian leu
+                        rsd | % serbian dinar
+                        rub | % russian ruble
+                        rwf | % rwandan franc
+                        sar | % saudi riyal
+                        sbd | % solomon islands dollar
+                        scr | % seychellois rupee
+                        sek | % swedish krona
+                        sgd | % singapore dollar
+                        shp | % saint helenian pound*
+                        sll | % sierra leonean leone
+                        sos | % somali shilling
+                        srd | % surinamese dollar*
+                        std | % são tomé and príncipe dobra
+                        svc | % salvadoran colón*
+                        szl | % swazi lilangeni
+                        thb | % thai baht
+                        tjs | % tajikistani somoni
+                        top | % tongan paʻanga
+                        'try' | % turkish lira
+                        ttd | % trinidad and tobago dollar
+                        twd | % new taiwan dollar
+                        tzs | % tanzanian shilling
+                        uah | % ukrainian hryvnia
+                        ugx | % ugandan shilling
+                        usd | % united states dollar
+                        uyi | % uruguayan peso*
+                        uzs | % uzbekistani som
+                        vef | % venezuelan bolívar*
+                        vnd | % vietnamese Đồng
+                        vuv | % vanuatu vatu
+                        wst | % samoan tala
+                        xaf | % central african cfa franc
+                        xcd | % east caribbean dollar
+                        xof | % west african cfa franc*
+                        xpf | % cfp franc*
+                        yer | % yemeni rial
+                        zar | % south african rand
+                        zmw.  % zambian kwacha
 -type customer_id()  :: binary(). % cu_* | cus_*  (docs show both in use)
 -type coupon_id()    :: binary(). % user specidied coupon ID
 -type plan_id()      :: binary(). % user specified plan ID
