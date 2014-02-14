@@ -4,7 +4,7 @@
 % General Types
 -type proplist()     :: [{term(), term()}].  % predefined in newer releases
 -type amount()       :: pos_integer().  % any amount of money
--type price()        :: 50..500000000.  % valid charge prices. $0.50 to $5M.
+-type price()        :: 50..99999999.  % valid charge prices. $0.50 to $1M-0.01
 -type currency()     :: aed | % united arab emirates dirham
                         afn | % afghan afghani*
                         all | % albanian lek
