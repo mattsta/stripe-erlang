@@ -328,5 +328,5 @@
                           account        :: #stripe_bank_account{},
                           description    :: desc(),
                           recipient      :: recipient_id(),
-                          statement_descriptor :: desc()}).
+                          statement_description :: desc()}).
 
