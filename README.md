@@ -4,12 +4,19 @@ stripe-erlang: stripe client.  erlang flavored.
 Status
 ------
 stripe-erlang is a minimal stripe client.  Currently we support these
-operations: turning a credit card into an opaque token, turning a bank account
-into an opaque token, creating a customer with a token,
-charging a customer, charging a token, creating a pay-out recipient,
-updating details of a recipient, transferring money to a recipient, updating
-a subscription, canceling a subscription, and retrieving customers, events,
-and invoiceitems.
+operations:
+
+  - turning a credit card into an opaque token
+  - turning a bank account into an opaque token
+  - creating a customer with a token
+  - charging a customer
+  - charging a token
+  - creating a pay-out recipient
+  - updating details of a recipient
+  - transferring money to a recipient
+  - updating a subscription
+  - canceling a subscription
+  - retrieving customers, events, and invoiceitems
 
 If you need refunds or transaction management, use the delightful stripe.com
 admin interface for now.
@@ -17,37 +24,38 @@ admin interface for now.
 Usage
 -----
 ### Quick Start
-    Eshell V5.9.3.1  (abort with ^G)
-    1> inets:start().
-    ok
-    2> ssl:start().
-    ok
-    3> application:start(stripe), application:set_env(stripe, auth_token, "vtUQeOtUnYr7PGCLQ96Ul4zqpDUO4sOE").
-    ok
-    4> rr(stripe).
-    [stripe_card,stripe_charge,stripe_customer,stripe_error,
-     stripe_event,stripe_invoiceitem,stripe_plan,
-     stripe_subscription,stripe_token]
-    5> #stripe_token{id = Token} = stripe:token_create("4242424242424242", 12, 2021, 123, [], [], [], [], [], []).
-    #stripe_token{id = <<"tok_1Lok1HEM0RJlE5">>,
-                  currency = 'Not Returned by API',used = false,
-                  amount = <<"Not Returned by API">>,livemode = false,
-                  card = #stripe_card{last4 = <<"4242">>,exp_year = 2021,
-                                      exp_month = 12,type = <<"Visa">>,
-                                      cvc_check = 'Not Returned by API',
-                                      address_line1_check = 'Not Returned by API',
-                                      address_zip_check = 'Not Returned by API',
-                                      country = <<"US">>}}
-    6> stripe:charge_card(5000, usd, Token, "Mah Money").
-    #stripe_charge{id = <<"ch_1Lok7sGzzioHBA">>,
-                   created = 1361721296,amount = 5000,fee = 175,currency = usd,
-                   description = <<"Mah Money">>,livemode = false,paid = true,
-                   refunded = false,customer = null,
-                   card = #stripe_card{last4 = <<"4242">>,exp_year = 2021,
-                                   exp_month = 12,type = <<"Visa">>,cvc_check = pass,
-                                   address_line1_check = null,address_zip_check = null,
-                                   country = <<"US">>}}
-
+```erlang
+Eshell V5.9.3.1  (abort with ^G)
+1> inets:start().
+ok
+2> ssl:start().
+ok
+3> application:start(stripe), application:set_env(stripe, auth_token, "vtUQeOtUnYr7PGCLQ96Ul4zqpDUO4sOE").
+ok
+4> rr(stripe).
+[stripe_card,stripe_charge,stripe_customer,stripe_error,
+ stripe_event,stripe_invoiceitem,stripe_plan,
+ stripe_subscription,stripe_token]
+5> #stripe_token{id = Token} = stripe:token_create("4242424242424242", 12, 2021, 123, [], [], [], [], [], []).
+#stripe_token{id = <<"tok_1Lok1HEM0RJlE5">>,
+              currency = 'Not Returned by API',used = false,
+              amount = <<"Not Returned by API">>,livemode = false,
+              card = #stripe_card{last4 = <<"4242">>,exp_year = 2021,
+                                  exp_month = 12,type = <<"Visa">>,
+                                  cvc_check = 'Not Returned by API',
+                                  address_line1_check = 'Not Returned by API',
+                                  address_zip_check = 'Not Returned by API',
+                                  country = <<"US">>}}
+6> stripe:charge_card(5000, usd, Token, "Mah Money").
+#stripe_charge{id = <<"ch_1Lok7sGzzioHBA">>,
+               created = 1361721296,amount = 5000,fee = 175,currency = usd,
+               description = <<"Mah Money">>,livemode = false,paid = true,
+               refunded = false,customer = null,
+               card = #stripe_card{last4 = <<"4242">>,exp_year = 2021,
+                               exp_month = 12,type = <<"Visa">>,cvc_check = pass,
+                               address_line1_check = null,address_zip_check = null,
+                               country = <<"US">>}}
+```
 
 ### Configuration
 You must start `inets` and `ssl` before using `stripe`.
@@ -55,10 +63,29 @@ You must start `inets` and `ssl` before using `stripe`.
 By default, erlang-stripe uses the global stripe API test token.
 You *must* change this to your private API key before you can receive payments:
 
-     inets:start(),
-     ssl:start(),
-     application:start(stripe),
-     application:set_env(stripe, auth_token, "sk_test_BQokikJOvBiI2HlWgH4olfQ2").
+```erlang
+inets:start(),
+ssl:start(),
+application:start(stripe),
+application:set_env(stripe, auth_token, "sk_test_BQokikJOvBiI2HlWgH4olfQ2").
+```
+Branch Naming Policy
+--------------------
+All Stripe API endpoints begin with `/v1/` and when I built this application,
+Stripe was much younger and didn't have huge API changes yet.  Crazy me thought
+by naming their API endpoint `/v1/` they would rev the version number for changes.
+
+Instead, Stripe decided to use date-based
+versions.  So, the Stripe API for your account is `/v1/` combined with the most
+recent `YYYY-MM-DD` API revision you've used.
+
+If this were a better organized project, we'd have branches or tags against each
+individual API change.  But, we're not that well organized.
+
+For now, we aim to always support the most recent Stripe API release defined at
+their [API upgrades](https://stripe.com/docs/upgrades) page.  If the most recent
+Stripe API has drifted from our implementation here, please file an issue or make
+a pull request so we can keep everything working.
 
 Building
 --------
@@ -69,7 +96,10 @@ Testing
 -------
         rebar eunit skip_deps=true suite=stripe
 
-Stripe sometimes changes API behavior.  Changes in API behavior can cause
+The tests automatically use valid Stripe public dev test tokens, so you don't
+need to enter any information for the tests to complete successfully.
+
+Sometimes Stripe changes their API behavior.  Changes in API behavior can cause
 our tests to fail.  If you find failing tests, check their latest API changes at
 [API Upgrades](https://stripe.com/docs/upgrades) then fix the code and/or tests
 to compensate.
@@ -106,3 +136,4 @@ Want to help?  Patches welcome.
 Contributors
 ------------
 * Thanks to @stefanrusek for fixing a failing test and expanding functionality
+* Thanks to @michaelpellon for fixing an interface due to the API changing out from under us
