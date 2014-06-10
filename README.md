@@ -10,6 +10,7 @@ operations:
   - turning a bank account into an opaque token
   - creating a customer with a token
   - charging a customer
+  - charging in any supported currency
   - charging a token
   - creating a pay-out recipient
   - updating details of a recipient
@@ -86,6 +87,37 @@ For now, we aim to always support the most recent Stripe API release defined at
 their [API upgrades](https://stripe.com/docs/upgrades) page.  If the most recent
 Stripe API has drifted from our implementation here, please file an issue or make
 a pull request so we can keep everything working.
+
+Currencies
+----------
+Stripe added multiple currency support, but how do you figure out your
+prices in all the different currencies?
+
+The stripe_currency module supports reading a JSON format of currency
+abbreviation to exchange rates.  You can get a currency JSON
+by signing up for free at [open exchange rates](https://openexchangerates.org/).
+
+Their free plan allow 1,000 complete exchange rate retrievals every month. You
+can easily cache their exchange rate output to stay under their monthly free limit.
+
+For easier ingestion of the currency JSON,
+use the currencies script in `priv/` to download the the JSON and
+format it correctly.
+
+You can load your currency file by putting the file path in an app environment
+variable for `stripe` called `currency_json` or you can load the file directly
+with `stripe_currency:load(Filename)`.  Loading the currency JSON will cache
+it in the app as well.
+
+You can convert prices using the `stripe_price/4` function:
+`stripe_currency:stripe_price(usd, eur, 500)` would convert 5.00 USD into EUR.  Remember,
+Stripe prices are in cents — unless — the currency has no cent denomination like
+the Yen.  In that case, we can convert *to* a zero cent currency, but not *from* one
+for the time being.
+
+**Note:** The `stripe_price` function automatically adds 2% to the final converted
+price to cover the additional fee charged by Stripe for all non-native currency
+transactions.
 
 Building
 --------
