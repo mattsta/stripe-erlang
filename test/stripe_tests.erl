@@ -168,7 +168,7 @@ verify_default_card(Card, CheckCVC) ->
   ?assertEqual(12, Card#stripe_card.exp_month),
   ?assertEqual(2021, Card#stripe_card.exp_year),
   ?assertEqual(<<"4242">>, Card#stripe_card.last4),
-  ?assertEqual(<<"Visa">>, Card#stripe_card.type).
+  ?assertEqual(<<"Visa">>, Card#stripe_card.brand).
 
 %%%----------------------------------------------------------------------
 %%% Setup / Cleanup

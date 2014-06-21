@@ -371,7 +371,7 @@ proplist_to_card(Card) ->
                last4               = ?V(last4),
                exp_month           = ?V(exp_month),
                exp_year            = ?V(exp_year),
-               type                = ?V(type),
+               brand               = ?V(brand),
                cvc_check           = check_to_atom(?V(cvc_check)),
                address_line1_check = check_to_atom(?V(address_line1_check)),
                address_zip_check   = check_to_atom(?V(address_zip_check)),

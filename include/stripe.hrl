@@ -211,7 +211,7 @@
                       last4      :: binary(),
                       exp_year   :: 2011..3000,
                       exp_month  :: 1..12,
-                      type       :: credit_provider(),
+                      brand      :: credit_provider(),
                       cvc_check  :: check_result(),
                       address_line1_check :: check_result(),
                       address_zip_check   :: check_result(),
