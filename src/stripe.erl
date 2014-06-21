@@ -270,6 +270,8 @@ json_to_record(charge, DecodedResult) ->
                  paid         = ?V(paid),
                  refunded     = ?V(refunded),
                  customer     = ?V(customer),
+                 failure_code = ?V(failure_code),
+                 failure_message = ?V(failure_message),
                  card         = proplist_to_card(?V(card))};
 
 json_to_record(token, DecodedResult) ->

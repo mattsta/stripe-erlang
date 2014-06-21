@@ -237,6 +237,8 @@
                         paid        :: boolean(),
                         refunded    :: boolean(),
                         customer    :: customer_id(),
+                        failure_code :: string(),
+                        failure_message :: string(),
                         card        :: #stripe_card{}
                       }).
 
