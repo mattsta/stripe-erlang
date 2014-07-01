@@ -259,7 +259,8 @@
                       livemode       :: boolean()
                      }).
 
--record(stripe_subscription, {status        :: atom(),
+-record(stripe_subscription, {id                   :: binary(),
+                              status               :: atom(),
                               current_period_start :: epoch(),
                               current_period_end   :: epoch(),
                               trial_start          :: epoch(),
@@ -331,4 +332,3 @@
                           description    :: desc(),
                           recipient      :: recipient_id(),
                           statement_description :: desc()}).
-

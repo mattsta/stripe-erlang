@@ -198,7 +198,7 @@ request_subscription(unsubscribe, Customer, Fields, _AtEnd = false) ->
 request_run(URL, Method, Fields) ->
   Headers = [{"X-Stripe-Client-User-Agent", ua_json()},
              {"User-Agent", "Stripe/v1 ErlangBindings/" ++ ?VSN_STR},
-             {"Authorization", auth_key()}], 
+             {"Authorization", auth_key()}],
   Type = "application/x-www-form-urlencoded",
   Body = gen_args(Fields),
   Request = case Method of
@@ -209,7 +209,7 @@ request_run(URL, Method, Fields) ->
             end,
   Requested = httpc:request(Method, Request, [], []),
   resolve(Requested).
-  
+
 %%%--------------------------------------------------------------------
 %%% response parsing
 %%%--------------------------------------------------------------------
@@ -316,7 +316,8 @@ json_to_record(coupon, DecodedResult) ->
 
 json_to_record(subscription, null) -> null;
 json_to_record(subscription, DecodedResult) when is_list(DecodedResult) ->
-  #stripe_subscription{status               = check_to_atom(?V(status)),
+  #stripe_subscription{id                   = ?V(id),
+                       status               = check_to_atom(?V(status)),
                        current_period_start = ?V(current_period_start),
                        current_period_end   = ?V(current_period_end),
                        trial_start          = ?V(trial_start),
