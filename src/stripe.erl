@@ -316,7 +316,8 @@ json_to_record(coupon, DecodedResult) ->
 
 json_to_record(subscription, null) -> null;
 json_to_record(subscription, DecodedResult) when is_list(DecodedResult) ->
-  #stripe_subscription{status               = check_to_atom(?V(status)),
+  #stripe_subscription{id                   = ?V(id),
+                       status               = check_to_atom(?V(status)),
                        current_period_start = ?V(current_period_start),
                        current_period_end   = ?V(current_period_end),
                        trial_start          = ?V(trial_start),
