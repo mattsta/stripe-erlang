@@ -198,7 +198,7 @@ request_subscription(unsubscribe, Customer, Fields, _AtEnd = false) ->
 request_run(URL, Method, Fields) ->
   Headers = [{"X-Stripe-Client-User-Agent", ua_json()},
              {"User-Agent", "Stripe/v1 ErlangBindings/" ++ ?VSN_STR},
-             {"Authorization", auth_key()}], 
+             {"Authorization", auth_key()}],
   Type = "application/x-www-form-urlencoded",
   Body = gen_args(Fields),
   Request = case Method of
@@ -209,7 +209,7 @@ request_run(URL, Method, Fields) ->
             end,
   Requested = httpc:request(Method, Request, [], []),
   resolve(Requested).
-  
+
 %%%--------------------------------------------------------------------
 %%% response parsing
 %%%--------------------------------------------------------------------
