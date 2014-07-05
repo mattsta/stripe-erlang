@@ -3,7 +3,7 @@
 -export([token_create/10, token_create_bank/3]).
 -export([customer_create/3, customer_get/1, customer_update/3]).
 -export([charge_customer/4, charge_card/4]).
--export([subscription_update/5, subscription_update/6, subscription_cancel/2]).
+-export([subscription_update/3, subscription_update/5, subscription_update/6, subscription_cancel/2, subscription_cancel/3]).
 -export([customer/1, event/1, invoiceitem/1]).
 -export([recipient_create/6, recipient_update/6]).
 -export([transfer_create/5, transfer_cancel/1]).
@@ -96,9 +96,17 @@ subscription_update(Customer, Plan, Coupon, Prorate, TrialEnd, Quantity) ->
             {"quantity", Quantity}],
   request_subscription(subscribe, Customer, Fields).
 
+subscription_update(Customer, Subscription, Fields) ->
+  request_subscription(update, Customer, Subscription, Fields).
+
 subscription_cancel(Customer, AtPeriodEnd) when is_boolean(AtPeriodEnd) ->
   Fields = [{"at_period_end", AtPeriodEnd}],
   request_subscription(unsubscribe, Customer, Fields, AtPeriodEnd).
+
+subscription_cancel(Customer, Subscription, AtPeriodEnd) when is_boolean(AtPeriodEnd) ->
+  Fields = [{"at_period_end", AtPeriodEnd}],
+  request_subscription(unsubscribe, Customer, Subscription, Fields, AtPeriodEnd).
+
 
 %%%--------------------------------------------------------------------
 %%% Recipient Management
@@ -189,11 +197,21 @@ request(Action, post, Fields) ->
 request_subscription(subscribe, Customer, Fields) ->
   request_run(gen_subscription_url(Customer), post, Fields).
 
+request_subscription(update, Customer, Subscription, Fields) ->
+  request_run(gen_subscription_url(Customer, Subscription), post, Fields);
+
 request_subscription(unsubscribe, Customer, Fields, _AtEnd = true) ->
   request_run(gen_subscription_url(Customer) ++ "?at_period_end=true",
     delete, Fields);
 request_subscription(unsubscribe, Customer, Fields, _AtEnd = false) ->
   request_run(gen_subscription_url(Customer), delete, Fields).
+
+request_subscription(unsubscribe, Customer, Subscription, Fields, _AtEnd = true) ->
+  request_run(gen_subscription_url(Customer, Subscription) ++ "?at_period_end=true",
+    delete, Fields);
+request_subscription(unsubscribe, Customer, Subscription,Fields, _AtEnd = false) ->
+  request_run(gen_subscription_url(Customer, Subscription), delete, Fields).
+
 
 request_run(URL, Method, Fields) ->
   Headers = [{"X-Stripe-Client-User-Agent", ua_json()},
@@ -491,6 +509,13 @@ gen_subscription_url(Customer) when is_binary(Customer) ->
   gen_subscription_url(binary_to_list(Customer));
 gen_subscription_url(Customer) when is_list(Customer) ->
   "https://api.stripe.com/v1/customers/" ++ Customer ++ "/subscription".
+
+gen_subscription_url(Customer, Subscription) when is_binary(Customer) ->
+  gen_subscription_url(binary_to_list(Customer), Subscription);
+gen_subscription_url(Customer, Subscription) when is_binary(Subscription) ->
+  gen_subscription_url(Customer, binary_to_list(Subscription));
+gen_subscription_url(Customer, Subscription) when is_list(Customer) ->
+  "https://api.stripe.com/v1/customers/" ++ Customer ++ "/subscriptions/" ++ Subscription.
 
 gen_event_url(EventId) when is_binary(EventId) ->
   gen_event_url(binary_to_list(EventId));
