@@ -135,7 +135,7 @@ transfer_create(Amount, Currency, RecipientId, Desc, StatementDesc) ->
             {currency, Currency},
             {recipient, RecipientId},
             {description, Desc},
-            {statement_description, StatementDesc}],
+            {statement_descriptor, StatementDesc}],
   request_transfer_create(Fields).
 
 transfer_cancel(TransferId) ->
