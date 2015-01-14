@@ -135,7 +135,7 @@ transfer_create(Amount, Currency, RecipientId, Desc, StatementDesc) ->
             {currency, Currency},
             {recipient, RecipientId},
             {description, Desc},
-            {statement_description, StatementDesc}],
+            {statement_descriptor, StatementDesc}],
   request_transfer_create(Fields).
 
 transfer_cancel(TransferId) ->
@@ -374,7 +374,7 @@ json_to_record(transfer, DecodedResult) ->
                    account      = proplist_to_bank_account(?V(account)),
                    description  = ?V(description),
                    recipient    = ?V(recipient),
-                   statement_description = ?V(statement_description)};
+                   statement_descriptor = ?V(statement_descriptor)};
 
 json_to_record(Type, DecodedResult) ->
   error_logger:error_msg({unimplemented, ?MODULE, json_to_record, Type, DecodedResult}),
