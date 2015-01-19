@@ -34,7 +34,11 @@ stripe_test_() ->
      {"Create Transfer",
        fun create_transfer/0},
      {"Cancel Transfer",
-       fun cancel_transfer/0}
+       fun cancel_transfer/0},
+     {"Create Invoice Item",
+       fun create_invoice_item/0},
+     {"Get Invoice Item",
+       fun get_invoice_item/0}
     ]
   }.
 
@@ -162,6 +166,37 @@ cancel_transfer() ->
   % This goes through but fails because the previous transfer is
   % considred automatic... or something.
   ?assertMatch(#stripe_error{}, T).
+
+create_invoice_item() ->
+  Customer = get(current_customer),
+  Desc = <<"INVOICE ALL THE THINGS">>,
+  Result = ?debugTime("Adding invoice item to customer",
+    stripe:invoiceitem_create(Customer, 12345, usd,  Desc)),
+  ?debugFmt("Invoice Item ID: ~p~n", [Result#stripe_invoiceitem.id]),
+  ?assertEqual(Desc, Result#stripe_invoiceitem.description),
+  ?assertEqual(12345, Result#stripe_invoiceitem.amount),
+  ?assertEqual(usd, Result#stripe_invoiceitem.currency),
+  ?assertEqual(Customer, Result#stripe_invoiceitem.customer),
+  put(invoice_id, Result#stripe_invoiceitem.id).
+
+get_invoice_item() ->
+  InvoiceID = get(invoice_id),
+  Customer = get(current_customer),
+  Desc = <<"INVOICE ALL THE THINGS">>,
+  Result = ?debugTime("Fetching previously created invoice item",
+                      stripe:invoiceitem(InvoiceID)),
+  case is_record(Result, stripe_invoiceitem) of
+      true ->
+          ?debugFmt("Invoice Item ID: ~p~n", [Result#stripe_invoiceitem.id]),
+          ?assertEqual(Desc, Result#stripe_invoiceitem.description),
+          ?assertEqual(12345, Result#stripe_invoiceitem.amount),
+          ?assertEqual(usd, Result#stripe_invoiceitem.currency),
+          ?assertEqual(Customer, Result#stripe_invoiceitem.customer);
+      false ->
+          {error, Reason} = Result,
+          ?debugFmt("Transfer failed: ~p~n", [Reason])
+  end.
+
 
 %%%----------------------------------------------------------------------
 %%% Meta Tests
