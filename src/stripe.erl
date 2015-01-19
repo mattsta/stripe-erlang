@@ -10,6 +10,7 @@
 -export([recipient_create/6, recipient_update/6]).
 -export([transfer_create/5, transfer_cancel/1]).
 -export([invoiceitem_create/4]).
+-export([gen_paginated_url/1, gen_paginated_url/2, gen_paginated_url/3, gen_paginated_url/4]).
 
 -include("stripe.hrl").
 
@@ -238,6 +239,7 @@ request_run(URL, Method, Fields) ->
             end,
   Requested = httpc:request(Method, Request, [], []),
   resolve(Requested).
+
 
 %%%--------------------------------------------------------------------
 %%% response parsing
@@ -531,3 +533,23 @@ gen_event_url(EventId) when is_binary(EventId) ->
   gen_event_url(binary_to_list(EventId));
 gen_event_url(EventId) when is_list(EventId) ->
   "https://api.stripe.com/v1/events/" ++ EventId.
+
+
+gen_paginated_url(Type) ->
+    gen_paginated_url(Type, 10, [], []).
+gen_paginated_url(Type, Limit) ->
+    gen_paginated_url(Type, Limit, [], []).
+gen_paginated_url(Type, Limit, StartingAfter) ->
+    gen_paginated_url(Type, Limit, StartingAfter, []).
+gen_paginated_url(Type, Limit, StartingAfter, EndingBefore) ->
+    Arguments = gen_args([{"limit", Limit},
+                          {"starting_after", StartingAfter},
+                          {"ending_before", EndingBefore}]),
+    gen_paginated_base_url(Type) ++ Arguments.
+
+gen_paginated_base_url(charges) ->
+    "https://api.stripe.com/v1/charges?";
+gen_paginated_base_url(customers) ->
+    "https://api.stripe.com/v1/customers?";
+gen_paginated_base_url(invoices) ->
+    "https://api.stripe.com/v1/invoices?".

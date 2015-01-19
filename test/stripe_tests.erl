@@ -40,7 +40,9 @@ stripe_test_() ->
      {"Create Invoice Item",
        fun create_invoice_item/0},
      {"Get Invoice Item",
-       fun get_invoice_item/0}
+       fun get_invoice_item/0},
+     {"Confirm Paginated URL",
+       fun verify_paginated_urls/0}
     ]
   }.
 
@@ -198,6 +200,24 @@ get_invoice_item() ->
           {error, Reason} = Result,
           ?debugFmt("Transfer failed: ~p~n", [Reason])
   end.
+
+verify_paginated_urls() ->
+    Result = ?debugTime("Trying paginated url/1", stripe:gen_paginated_url(customers)),
+    ?debugFmt("Result was: ~p~n", [Result]),
+    ?assertEqual(Result, "https://api.stripe.com/v1/customers?limit=10"),
+    Result1 = ?debugTime("Trying paginated url/2", stripe:gen_paginated_url(invoices, 50)),
+    ?debugFmt("Result was: ~p~n", [Result1]),
+    ?assertEqual(Result1, "https://api.stripe.com/v1/invoices?limit=50"),
+    Result2 = ?debugTime("Trying paginated url/3", stripe:gen_paginated_url(charges, 100, "cus_123")),
+    ?debugFmt("Result was: ~p~n", [Result2]),
+    ?assertEqual(Result2, "https://api.stripe.com/v1/charges?limit=100&starting_after=cus_123"),
+    Result3 = ?debugTime("Trying paginated url/4", stripe:gen_paginated_url(customers, 50, "cus_123", "cus_456")),
+    ?debugFmt("Result was: ~p~n", [Result3]),
+    ?assertEqual(Result3, "https://api.stripe.com/v1/customers?limit=50&starting_after=cus_123&ending_before=cus_456").
+
+
+
+
 
 
 %%%----------------------------------------------------------------------
