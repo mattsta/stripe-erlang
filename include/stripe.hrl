@@ -307,6 +307,9 @@
                        created :: epoch(),
                        data}).
 
+-type paginated_object() :: #stripe_customer{} | #stripe_charge{}. % | #stripe_invoice{} - not implemented
+-record(stripe_list, {data :: [paginated_object()]}).
+
 -record(stripe_invoiceitem, {id          :: invoice_id(),
                              amount      :: amount(),
                              currency    :: currency(),

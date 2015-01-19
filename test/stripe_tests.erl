@@ -40,7 +40,11 @@ stripe_test_() ->
      {"Create Invoice Item",
        fun create_invoice_item/0},
      {"Get Invoice Item",
-       fun get_invoice_item/0}
+       fun get_invoice_item/0},
+     {"Confirm Paginated URL",
+       fun verify_paginated_urls/0},
+     {"Get specific number of customers",
+      fun verify_customer_list_by_num/0}
     ]
   }.
 
@@ -75,9 +79,7 @@ charge_token() ->
   ?assertEqual(true, is_binary(Result#stripe_charge.balance_transaction)),
   ?assertEqual(true, Result#stripe_charge.paid),
   ?assertEqual(false, Result#stripe_charge.refunded),
-  ?assertEqual(Desc, Result#stripe_charge.description),
-  verify_default_card(Result#stripe_charge.card, check).
-
+  ?assertEqual(Desc, Result#stripe_charge.description).
 create_min_customer() ->
   Result = ?debugTime("Creating minimum customer",
     stripe:customer_create("", "", "")),
@@ -188,17 +190,41 @@ get_invoice_item() ->
   Result = ?debugTime("Fetching previously created invoice item",
                       stripe:invoiceitem(InvoiceID)),
   case is_record(Result, stripe_invoiceitem) of
-      true ->
-          ?debugFmt("Invoice Item ID: ~p~n", [Result#stripe_invoiceitem.id]),
-          ?assertEqual(Desc, Result#stripe_invoiceitem.description),
-          ?assertEqual(12345, Result#stripe_invoiceitem.amount),
-          ?assertEqual(usd, Result#stripe_invoiceitem.currency),
-          ?assertEqual(Customer, Result#stripe_invoiceitem.customer);
-      false ->
-          {error, Reason} = Result,
-          ?debugFmt("Transfer failed: ~p~n", [Reason])
+    true ->
+      ?debugFmt("Invoice Item ID: ~p~n", [Result#stripe_invoiceitem.id]),
+      ?assertEqual(Desc, Result#stripe_invoiceitem.description),
+      ?assertEqual(12345, Result#stripe_invoiceitem.amount),
+      ?assertEqual(usd, Result#stripe_invoiceitem.currency),
+      ?assertEqual(Customer, Result#stripe_invoiceitem.customer);
+    false ->
+      {error, Reason} = Result,
+      ?debugFmt("Transfer failed: ~p~n", [Reason])
   end.
 
+verify_paginated_urls() ->
+  Result = ?debugTime("Trying paginated url/1", stripe:gen_paginated_url(customers)),
+  ?debugFmt("Result was: ~p~n", [Result]),
+  ?assertEqual(Result, "https://api.stripe.com/v1/customers?limit=10"),
+  Result1 = ?debugTime("Trying paginated url/2", stripe:gen_paginated_url(invoices, 50)),
+  ?debugFmt("Result was: ~p~n", [Result1]),
+  ?assertEqual(Result1, "https://api.stripe.com/v1/invoices?limit=50"),
+  Result2 = ?debugTime("Trying paginated url/3", stripe:gen_paginated_url(charges, 100, "cus_123")),
+  ?debugFmt("Result was: ~p~n", [Result2]),
+  ?assertEqual(Result2, "https://api.stripe.com/v1/charges?limit=100&starting_after=cus_123"),
+  Result3 = ?debugTime("Trying paginated url/4", stripe:gen_paginated_url(customers, 50, "cus_123", "cus_456")),
+  ?debugFmt("Result was: ~p~n", [Result3]),
+  ?assertEqual(Result3, "https://api.stripe.com/v1/customers?limit=50&starting_after=cus_123&ending_before=cus_456").
+
+verify_customer_list_by_num() ->
+  LowCount = 5,
+  LowResult = ?debugTime("Fetching small customer list", stripe:get_num_customers(LowCount)),
+  ?assertEqual(LowCount, length(LowResult#stripe_list.data)),
+  HighCount = 20,
+  HighResult = ?debugTime("Fetching large customer list", stripe:get_num_customers(HighCount)),
+  ?assertEqual(HighCount, length(HighResult#stripe_list.data)),
+  MaxCount = 100,
+  MaxResult = ?debugTime("Fetching max customer list", stripe:get_num_customers(MaxCount)),
+  ?assertEqual(MaxCount, length(MaxResult#stripe_list.data)).
 
 %%%----------------------------------------------------------------------
 %%% Meta Tests
