@@ -256,7 +256,7 @@ resolve_status(HTTPStatus, ErrorBody) ->
 json_to_record(Json) when is_list(Json) andalso is_tuple(hd(Json)) ->
   case proplists:get_value(<<"object">>, Json) of
     <<"event">> -> json_to_event_record(Json);
-          Found -> json_to_record(binary_to_atom(Found, utf8), Json)
+          Found -> json_to_record(Found, Json)
   end;
 json_to_record(Body) when is_list(Body) orelse is_binary(Body) ->
   DecodedResult = mochijson2:decode(Body, [{format, proplist}]),
@@ -266,16 +266,15 @@ json_to_event_record(DecodedResult) ->
   Data = ?V(data),
   Object = proplists:get_value(<<"object">>, Data),
   ObjectName = proplists:get_value(<<"object">>, Object),
-  DataType = binary_to_atom(ObjectName, utf8),
   #stripe_event{id      = ?V(id),
                 type    = ?V(type),
                 created = ?V(created),
-                data    = json_to_record(DataType, Object)}.
+                data    = json_to_record(ObjectName, Object)}.
 
 % Yes, these are verbose and dumb because we don't have runtime record/object
 % capabilities.  In a way, it's nice being explicit up front.
 -spec json_to_record(stripe_object_name(), proplist()) -> record().
-json_to_record(charge, DecodedResult) ->
+json_to_record(<<"charge">>, DecodedResult) ->
   #stripe_charge{id           = ?V(id),
                  created      = ?V(created),
                  amount       = ?V(amount),
@@ -290,26 +289,26 @@ json_to_record(charge, DecodedResult) ->
                  failure_message = ?V(failure_message),
                  card         = proplist_to_card(?V(card))};
 
-json_to_record(token, DecodedResult) ->
+json_to_record(<<"token">>, DecodedResult) ->
   #stripe_token{id        = ?V(id),
                 used      = ?V(used),
                 livemode  = ?V(livemode),
                 card = proplist_to_card(?V(card)),
                 bank_account = proplist_to_bank_account(?V(bank_account))};
 
-json_to_record(customer, DecodedResult) ->
+json_to_record(<<"customer">>, DecodedResult) ->
   #stripe_customer{id              = ?V(id),
                    description     = ?V(description),
                    livemode        = ?V(livemode),
                    created         = ?V(created),
                    email           = ?V(email),
                    delinquent      = ?V(delinquent),
-                   discount        = json_to_record(discount, ?V(discount)),
+                   discount        = json_to_record(<<"discount">>, ?V(discount)),
                    account_balance = ?V(account_balance)};
 
 % We don't have eunit tests for discount decoding yet.  Use at your own risk.
-json_to_record(discount, null) -> null;
-json_to_record(discount, DecodedResult) ->
+json_to_record(<<"discount">>, null) -> null;
+json_to_record(<<"discount">>, DecodedResult) ->
   #stripe_discount{coupon   = json_to_record(coupon, ?V(coupon)),
                    start    = ?V(start),
                    'end'    = ?V('end'),
@@ -317,8 +316,8 @@ json_to_record(discount, DecodedResult) ->
                   };
 
 % We don't have eunit tests for coupon decoding yet.  Use at your own risk.
-json_to_record(coupon, null) -> null;
-json_to_record(coupon, DecodedResult) ->
+json_to_record(<<"coupon">>, null) -> null;
+json_to_record(<<"coupon">>, DecodedResult) ->
   #stripe_coupon{id                 = ?V(id),
                  percent_off        = ?V(percent_off),
                  amount_off         = ?V(amount_off),
@@ -330,8 +329,8 @@ json_to_record(coupon, DecodedResult) ->
                  duration_in_months = ?V(duration_in_months)
                 };
 
-json_to_record(subscription, null) -> null;
-json_to_record(subscription, DecodedResult) when is_list(DecodedResult) ->
+json_to_record(<<"subscription">>, null) -> null;
+json_to_record(<<"subscription">>, DecodedResult) when is_list(DecodedResult) ->
   #stripe_subscription{id                   = ?V(id),
                        status               = check_to_atom(?V(status)),
                        current_period_start = ?V(current_period_start),
@@ -345,7 +344,7 @@ json_to_record(subscription, DecodedResult) when is_list(DecodedResult) ->
                        quantity             = ?V(quantity),
                        plan                 = proplist_to_plan(?V(plan))};
 
-json_to_record(invoiceitem, DecodedResult) ->
+json_to_record(<<"invoiceitem">>, DecodedResult) ->
   #stripe_invoiceitem{id           = ?V(id),
                       amount       = ?V(amount),
                       currency     = check_to_atom(?V(currency)),
@@ -354,7 +353,7 @@ json_to_record(invoiceitem, DecodedResult) ->
                       description  = ?V(description),
                       proration    = ?V(proration)};
 
-json_to_record(recipient, DecodedResult) ->
+json_to_record(<<"recipient">>, DecodedResult) ->
   #stripe_recipient{id           = ?V(id),
                     created      = ?V(created),
                     type         = check_to_atom(?V(type)),
@@ -364,7 +363,7 @@ json_to_record(recipient, DecodedResult) ->
                     name         = ?V(name),
                     email        = ?V(email)};
 
-json_to_record(transfer, DecodedResult) ->
+json_to_record(<<"transfer">>, DecodedResult) ->
   #stripe_transfer{id           = ?V(id),
                    amount       = ?V(amount),
                    currency     = check_to_atom(?V(currency)),
