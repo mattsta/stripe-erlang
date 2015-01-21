@@ -42,7 +42,9 @@ stripe_test_() ->
      {"Get Invoice Item",
        fun get_invoice_item/0},
      {"Confirm Paginated URL",
-       fun verify_paginated_urls/0}
+       fun verify_paginated_urls/0},
+     {"Get all customers",
+      fun get_all_customers/0}
     ]
   }.
 
@@ -215,8 +217,9 @@ verify_paginated_urls() ->
     ?debugFmt("Result was: ~p~n", [Result3]),
     ?assertEqual(Result3, "https://api.stripe.com/v1/customers?limit=50&starting_after=cus_123&ending_before=cus_456").
 
-
-
+get_all_customers() ->
+    Result = ?debugTime("Trying to get all customers", stripe:get_all_customers()),
+    ?debugFmt("Result was: ~p~n", [Result]).
 
 
 
