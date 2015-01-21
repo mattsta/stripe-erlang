@@ -7,6 +7,7 @@
 -export([customer/1, event/1, invoiceitem/1]).
 -export([recipient_create/6, recipient_update/6]).
 -export([transfer_create/5, transfer_cancel/1]).
+-export([invoiceitem_create/4]).
 
 -include("stripe.hrl").
 
@@ -153,6 +154,13 @@ customer(CustomerId) ->
 invoiceitem(InvoiceItemId) ->
   request_invoiceitem(InvoiceItemId).
 
+invoiceitem_create(Customer, Amount, Currency, Description) ->
+    Fields = [{customer, Customer},
+              {amount, Amount},
+              {currency, Currency},
+              {description, Description}],
+    request_invoiceitem_create(Fields).
+
 %%%--------------------------------------------------------------------
 %%% request generation and sending
 %%%--------------------------------------------------------------------
@@ -167,6 +175,9 @@ request_customer(CustomerId) ->
 
 request_invoiceitem(InvoiceItemId) ->
   request_run(gen_invoiceitem_url(InvoiceItemId), get, []).
+
+request_invoiceitem_create(Fields) ->
+  request(invoiceitems, post, Fields).
 
 request_customer_create(Fields) ->
   request(customers, post, Fields).
@@ -499,7 +510,7 @@ gen_transfer_cancel_url(TransferId) when is_list(TransferId) ->
   "https://api.stripe.com/v1/transfers/" ++ TransferId ++ "/cancel".
 
 gen_invoiceitem_url(InvoiceItemId) when is_binary(InvoiceItemId) ->
-  gen_customer_url(binary_to_list(InvoiceItemId));
+  gen_invoiceitem_url(binary_to_list(InvoiceItemId));
 gen_invoiceitem_url(InvoiceItemId) when is_list(InvoiceItemId) ->
   "https://api.stripe.com/v1/invoiceitems/" ++ InvoiceItemId.
 
