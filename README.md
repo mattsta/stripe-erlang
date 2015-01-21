@@ -1,6 +1,8 @@
 stripe-erlang: stripe client.  erlang flavored.
 ===============================================
 
+[![Build Status](https://secure.travis-ci.org/mattsta/stripe-erlang.png)](http://travis-ci.org/mattsta/stripe-erlang)
+
 Status
 ------
 stripe-erlang is a minimal stripe client.  Currently we support these
