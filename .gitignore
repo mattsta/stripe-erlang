@@ -3,3 +3,4 @@ deps/
 ebin/
 tags
 priv/currencies.json
+.rebar/
