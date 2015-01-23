@@ -11,7 +11,7 @@
 -export([transfer_create/5, transfer_cancel/1]).
 -export([invoiceitem_create/4]).
 -export([gen_paginated_url/1, gen_paginated_url/2, gen_paginated_url/3, gen_paginated_url/4]).
--export([get_all_customers/0]).
+-export([get_all_customers/0, get_num_customers/1]).
 
 -include("stripe.hrl").
 
@@ -174,7 +174,11 @@ invoiceitem_create(Customer, Amount, Currency, Description) ->
 %%%--------------------------------------------------------------------
 
 get_all_customers() ->
+    %% TODO, needs fixing
     request_paginated_customers().
+
+get_num_customers(Count) ->
+    request_paginated_customers(Count).
 
 %%%--------------------------------------------------------------------
 %%% request generation and sending
@@ -239,6 +243,8 @@ request_subscription(unsubscribe, Customer, Subscription,Fields, _AtEnd = false)
 
 request_paginated_customers() ->
     request_run(gen_paginated_url(customers), get, []).
+request_paginated_customers(Count) ->
+    request_run(gen_paginated_url(customers, Count), get, []).
 
 request_run(URL, Method, Fields) ->
   Headers = [{"X-Stripe-Client-User-Agent", ua_json()},
@@ -254,6 +260,18 @@ request_run(URL, Method, Fields) ->
             end,
   Requested = httpc:request(Method, Request, [], []),
   resolve(Requested).
+
+%% request_run_paginated(URL) ->
+%%     GetRequest = fun(URL) ->
+%%                          Headers = [{"X-Stripe-Client-User-Agent", ua_json()},
+%%                                     {"User-Agent", "Stripe/v1 ErlangBindings/" ++ ?VSN_STR},
+%%                                     {"Authorization", auth_key()}],
+%%                          Type = "application/x-www-form-urlencoded",
+%%                          Request = {URL, Headers},
+%%                          Requested = httpc:request(get, Request, [], [])
+%%                  end,
+%%     Requested = GetRequest(URL),
+
 
 
 %%%--------------------------------------------------------------------
