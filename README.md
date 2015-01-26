@@ -19,6 +19,7 @@ operations:
   - transferring money to a recipient
   - updating a subscription
   - canceling a subscription
+  - creating invoiceitems
   - retrieving customers, events, and invoiceitems
 
 If you need refunds or transaction management, use the delightful stripe.com
@@ -171,3 +172,4 @@ Contributors
 ------------
 * Thanks to @stefanrusek for fixing a failing test and expanding functionality
 * Thanks to @michaelpellon for fixing an interface due to the API changing out from under us
+* Thanks to @jaredmorrow for fixing API drift issues, code cleanup, error removal, and general awesomeness
