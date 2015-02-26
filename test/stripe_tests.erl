@@ -192,41 +192,44 @@ get_invoice_item() ->
   Result = ?debugTime("Fetching previously created invoice item",
                       stripe:invoiceitem(InvoiceID)),
   case is_record(Result, stripe_invoiceitem) of
-      true ->
-          ?debugFmt("Invoice Item ID: ~p~n", [Result#stripe_invoiceitem.id]),
-          ?assertEqual(Desc, Result#stripe_invoiceitem.description),
-          ?assertEqual(12345, Result#stripe_invoiceitem.amount),
-          ?assertEqual(usd, Result#stripe_invoiceitem.currency),
-          ?assertEqual(Customer, Result#stripe_invoiceitem.customer);
-      false ->
-          {error, Reason} = Result,
-          ?debugFmt("Transfer failed: ~p~n", [Reason])
+    true ->
+      ?debugFmt("Invoice Item ID: ~p~n", [Result#stripe_invoiceitem.id]),
+      ?assertEqual(Desc, Result#stripe_invoiceitem.description),
+      ?assertEqual(12345, Result#stripe_invoiceitem.amount),
+      ?assertEqual(usd, Result#stripe_invoiceitem.currency),
+      ?assertEqual(Customer, Result#stripe_invoiceitem.customer);
+    false ->
+      {error, Reason} = Result,
+      ?debugFmt("Transfer failed: ~p~n", [Reason])
   end.
 
 verify_paginated_urls() ->
-    Result = ?debugTime("Trying paginated url/1", stripe:gen_paginated_url(customers)),
-    ?debugFmt("Result was: ~p~n", [Result]),
-    ?assertEqual(Result, "https://api.stripe.com/v1/customers?limit=10"),
-    Result1 = ?debugTime("Trying paginated url/2", stripe:gen_paginated_url(invoices, 50)),
-    ?debugFmt("Result was: ~p~n", [Result1]),
-    ?assertEqual(Result1, "https://api.stripe.com/v1/invoices?limit=50"),
-    Result2 = ?debugTime("Trying paginated url/3", stripe:gen_paginated_url(charges, 100, "cus_123")),
-    ?debugFmt("Result was: ~p~n", [Result2]),
-    ?assertEqual(Result2, "https://api.stripe.com/v1/charges?limit=100&starting_after=cus_123"),
-    Result3 = ?debugTime("Trying paginated url/4", stripe:gen_paginated_url(customers, 50, "cus_123", "cus_456")),
-    ?debugFmt("Result was: ~p~n", [Result3]),
-    ?assertEqual(Result3, "https://api.stripe.com/v1/customers?limit=50&starting_after=cus_123&ending_before=cus_456").
+  Result = ?debugTime("Trying paginated url/1", stripe:gen_paginated_url(customers)),
+  ?debugFmt("Result was: ~p~n", [Result]),
+  ?assertEqual(Result, "https://api.stripe.com/v1/customers?limit=10"),
+  Result1 = ?debugTime("Trying paginated url/2", stripe:gen_paginated_url(invoices, 50)),
+  ?debugFmt("Result was: ~p~n", [Result1]),
+  ?assertEqual(Result1, "https://api.stripe.com/v1/invoices?limit=50"),
+  Result2 = ?debugTime("Trying paginated url/3", stripe:gen_paginated_url(charges, 100, "cus_123")),
+  ?debugFmt("Result was: ~p~n", [Result2]),
+  ?assertEqual(Result2, "https://api.stripe.com/v1/charges?limit=100&starting_after=cus_123"),
+  Result3 = ?debugTime("Trying paginated url/4", stripe:gen_paginated_url(customers, 50, "cus_123", "cus_456")),
+  ?debugFmt("Result was: ~p~n", [Result3]),
+  ?assertEqual(Result3, "https://api.stripe.com/v1/customers?limit=50&starting_after=cus_123&ending_before=cus_456").
 
 verify_customer_list_by_num() ->
-    LowCount = 5,
-    LowResult = ?debugTime("Fetching small customer list", stripe:get_num_customers(LowCount)),
-    ?assertEqual(LowCount, length(LowResult#stripe_list.data)),
-    HighCount = 20,
-    HighResult = ?debugTime("Fetching large customer list", stripe:get_num_customers(HighCount)),
-    ?assertEqual(HighCount, length(HighResult#stripe_list.data)),
-    MaxCount = 100,
-    MaxResult = ?debugTime("Fetching max customer list", stripe:get_num_customers(MaxCount)),
-    ?debugFmt("Got ~p records~n", [length(MaxResult#stripe_list.data)]).
+  LowCount = 5,
+  LowResult = ?debugTime("Fetching small customer list", stripe:get_num_customers(LowCount)),
+  ?assertEqual(LowCount, length(LowResult#stripe_list.data)),
+  HighCount = 20,
+  HighResult = ?debugTime("Fetching large customer list", stripe:get_num_customers(HighCount)),
+  ?assertEqual(HighCount, length(HighResult#stripe_list.data)),
+  MaxCount = 100,
+  MaxResult = ?debugTime("Fetching max customer list", stripe:get_num_customers(MaxCount)),
+  ?debugFmt("Got ~p records~n", [length(MaxResult#stripe_list.data)]),
+  AllResult = ?debugTime("Fetching all customers", stripe:get_all_customers()),
+  ?debugFmt("Got ~p records~n", [length(AllResult#stripe_list.data)]).
+
 
 
 

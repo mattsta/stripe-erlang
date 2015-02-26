@@ -18,6 +18,10 @@
 -define(VSN_BIN, <<"0.7.0">>).
 -define(VSN_STR, binary_to_list(?VSN_BIN)).
 
+% Stripe limit for paginated requests, change
+% this number if stripe changes it in the future
+% See: https://stripe.com/docs/api#pagination
+-define(STRIPE_LIST_LIMIT, 100).
 %%%--------------------------------------------------------------------
 %%% Charging
 %%%--------------------------------------------------------------------
@@ -174,8 +178,7 @@ invoiceitem_create(Customer, Amount, Currency, Description) ->
 %%%--------------------------------------------------------------------
 
 get_all_customers() ->
-    %% TODO, needs fixing
-    request_paginated_customers().
+    request_paginated_customers(all).
 
 get_num_customers(Count) ->
     request_paginated_customers(Count).
@@ -241,10 +244,13 @@ request_subscription(unsubscribe, Customer, Subscription, Fields, _AtEnd = true)
 request_subscription(unsubscribe, Customer, Subscription,Fields, _AtEnd = false) ->
   request_run(gen_subscription_url(Customer, Subscription), delete, Fields).
 
-request_paginated_customers() ->
-    request_run(gen_paginated_url(customers), get, []).
+request_paginated_customers(all) ->
+  request_run_all(gen_paginated_url(customers, ?STRIPE_LIST_LIMIT));
+request_paginated_customers(Count) when Count =< ?STRIPE_LIST_LIMIT ->
+  request_run(gen_paginated_url(customers, Count), get, []);
 request_paginated_customers(Count) ->
-    request_run(gen_paginated_url(customers, Count), get, []).
+  error_logger:error_msg("Requested ~p customers when ~p is the maximum allowed~n", [Count,
+                                                                                     ?STRIPE_LIST_LIMIT]).
 
 request_run(URL, Method, Fields) ->
   Headers = [{"X-Stripe-Client-User-Agent", ua_json()},
@@ -261,17 +267,22 @@ request_run(URL, Method, Fields) ->
   Requested = httpc:request(Method, Request, [], []),
   resolve(Requested).
 
-%% request_run_paginated(URL) ->
-%%     GetRequest = fun(URL) ->
-%%                          Headers = [{"X-Stripe-Client-User-Agent", ua_json()},
-%%                                     {"User-Agent", "Stripe/v1 ErlangBindings/" ++ ?VSN_STR},
-%%                                     {"Authorization", auth_key()}],
-%%                          Type = "application/x-www-form-urlencoded",
-%%                          Request = {URL, Headers},
-%%                          Requested = httpc:request(get, Request, [], [])
-%%                  end,
-%%     Requested = GetRequest(URL),
+request_run_all(URL) ->
+  GetRequest = fun(URLrequest) ->
+                   Headers = [{"X-Stripe-Client-User-Agent", ua_json()},
+                              {"User-Agent", "Stripe/v1 ErlangBindings/" ++ ?VSN_STR},
+                              {"Authorization", auth_key()}],
+                   Request = {URLrequest, Headers},
+                   httpc:request(get, Request, [], [])
+               end,
+  Requested = GetRequest(URL),
+  does_has_more(Requested),
+  resolve(Requested).
 
+does_has_more({ok, {{_HTTPVer, _StatusCode, _Reason}, _Headers, Body}}) ->
+  DecodedResult = mochijson2:decode(Body, [{format, proplist}]),
+  HasMore = proplists:get_value(<<"has_more">>, DecodedResult),
+  HasMore.
 
 
 %%%--------------------------------------------------------------------
