@@ -178,10 +178,10 @@ invoiceitem_create(Customer, Amount, Currency, Description) ->
 %%%--------------------------------------------------------------------
 
 get_all_customers() ->
-    request_paginated_customers(all).
+    request_all_customers().
 
 get_num_customers(Count) ->
-    request_paginated_customers(Count).
+    request_num_customers(Count).
 
 %%%--------------------------------------------------------------------
 %%% request generation and sending
@@ -244,13 +244,34 @@ request_subscription(unsubscribe, Customer, Subscription, Fields, _AtEnd = true)
 request_subscription(unsubscribe, Customer, Subscription,Fields, _AtEnd = false) ->
   request_run(gen_subscription_url(Customer, Subscription), delete, Fields).
 
-request_paginated_customers(all) ->
-  request_run_all(gen_paginated_url(customers, ?STRIPE_LIST_LIMIT));
-request_paginated_customers(Count) when Count =< ?STRIPE_LIST_LIMIT ->
+request_all_customers() ->
+  request_all(customers).
+
+request_num_customers(Count) when Count =< ?STRIPE_LIST_LIMIT ->
   request_run(gen_paginated_url(customers, Count), get, []);
-request_paginated_customers(Count) ->
+request_num_customers(Count) ->
   error_logger:error_msg("Requested ~p customers when ~p is the maximum allowed~n", [Count,
                                                                                      ?STRIPE_LIST_LIMIT]).
+
+request_all(Type) ->
+  request_all(Type, []).
+request_all(Type, StartingAfter) ->
+  case request_run_all(gen_paginated_url(Type, ?STRIPE_LIST_LIMIT, StartingAfter)) of
+    {error, Reason} ->
+      {error, Reason};
+    {false, Results} ->
+      Results#stripe_list.data;
+    {true, Results} ->
+      TypeList = Results#stripe_list.data,
+      LastElement = hd(lists:reverse(TypeList)),
+      LastElementId = get_record_id(LastElement),
+      TypeList ++ request_all(Type, LastElementId)
+  end.
+
+get_record_id(Type) when is_record(Type, stripe_customer) ->
+  Type#stripe_customer.id;
+get_record_id(Type) when is_record(Type, stripe_charge) ->
+  Type#stripe_charge.id.
 
 request_run(URL, Method, Fields) ->
   Headers = [{"X-Stripe-Client-User-Agent", ua_json()},
@@ -268,22 +289,23 @@ request_run(URL, Method, Fields) ->
   resolve(Requested).
 
 request_run_all(URL) ->
-  GetRequest = fun(URLrequest) ->
-                   Headers = [{"X-Stripe-Client-User-Agent", ua_json()},
-                              {"User-Agent", "Stripe/v1 ErlangBindings/" ++ ?VSN_STR},
-                              {"Authorization", auth_key()}],
-                   Request = {URLrequest, Headers},
-                   httpc:request(get, Request, [], [])
-               end,
-  Requested = GetRequest(URL),
-  does_has_more(Requested),
-  resolve(Requested).
+  Headers = [{"X-Stripe-Client-User-Agent", ua_json()},
+             {"User-Agent", "Stripe/v1 ErlangBindings/" ++ ?VSN_STR},
+             {"Authorization", auth_key()}],
+  Request = {URL, Headers},
+  Requested = httpc:request(get, Request, [], []),
+
+  case resolve(Requested) of
+    {error, Reason} ->
+      {error, Reason};
+    Results ->
+      HasMore = does_has_more(Requested),
+      {HasMore, Results}
+  end.
 
 does_has_more({ok, {{_HTTPVer, _StatusCode, _Reason}, _Headers, Body}}) ->
   DecodedResult = mochijson2:decode(Body, [{format, proplist}]),
-  HasMore = proplists:get_value(<<"has_more">>, DecodedResult),
-  HasMore.
-
+  proplists:get_value(<<"has_more">>, DecodedResult).
 
 %%%--------------------------------------------------------------------
 %%% response parsing
