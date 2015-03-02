@@ -343,7 +343,7 @@ json_to_record(Body) when is_list(Body) orelse is_binary(Body) ->
 
 % Yes, these are verbose and dumb because we don't have runtime record/object
 % capabilities.  In a way, it's nice being explicit up front.
--spec json_to_record(stripe_object_name(), proplist()) -> record().
+-spec json_to_record(stripe_object_name(), proplist()) -> #stripe_list{}.
 json_to_record(<<"list">>, DecodedResult) ->
     Data = ?V(data),
     #stripe_list{data = [json_to_record(Object) || Object <- Data]};
