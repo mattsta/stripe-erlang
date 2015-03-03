@@ -79,9 +79,7 @@ charge_token() ->
   ?assertEqual(true, is_binary(Result#stripe_charge.balance_transaction)),
   ?assertEqual(true, Result#stripe_charge.paid),
   ?assertEqual(false, Result#stripe_charge.refunded),
-  ?assertEqual(Desc, Result#stripe_charge.description),
-  verify_default_card(Result#stripe_charge.card, check).
-
+  ?assertEqual(Desc, Result#stripe_charge.description).
 create_min_customer() ->
   Result = ?debugTime("Creating minimum customer",
     stripe:customer_create("", "", "")),
@@ -226,13 +224,7 @@ verify_customer_list_by_num() ->
   ?assertEqual(HighCount, length(HighResult#stripe_list.data)),
   MaxCount = 100,
   MaxResult = ?debugTime("Fetching max customer list", stripe:get_num_customers(MaxCount)),
-  ?debugFmt("Got ~p records~n", [length(MaxResult#stripe_list.data)]),
-  AllResult = ?debugTime("Fetching all customers", stripe:get_all_customers()),
-  ?debugFmt("Got ~p records~n", [length(AllResult#stripe_list.data)]).
-
-
-
-
+  ?assertEqual(MaxCount, length(MaxResult#stripe_list.data)).
 
 %%%----------------------------------------------------------------------
 %%% Meta Tests
