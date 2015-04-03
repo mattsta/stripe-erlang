@@ -13,10 +13,14 @@ stripe_test_() ->
     fun setup/0,
     fun teardown/1,
     [
+     {"Create Immediate Credit Card Token",
+       fun create_token_card_immediate/0},
      {"Create Credit Card Token",
        fun create_token_card/0},
      {"Create Bank Account Token",
        fun create_token_bank/0},
+     {"Charge Token Immediate",
+       fun charge_token_immediate/0},
      {"Charge Token",
        fun charge_token/0},
      {"Create Minimum Customer",
@@ -51,6 +55,14 @@ stripe_test_() ->
 %%%----------------------------------------------------------------------
 %%% Tests
 %%%----------------------------------------------------------------------
+create_token_card_immediate() ->
+  Result = ?debugTime("Creating immediate credit card token",
+                      stripe:token_create("4000 0000 0000 0077", 12, 2021, 123,
+                                          [], [], [], [], [], [])),
+  put(current_card_token_immediate, Result#stripe_token.id),
+  ?debugFmt("Token ID: ~p~n", [Result#stripe_token.id]),
+  ?assertEqual(false, Result#stripe_token.used).
+
 create_token_card() ->
   Result = ?debugTime("Creating credit card token",
                       stripe:token_create("4242424242424242", 12, 2021, 123,
@@ -68,6 +80,15 @@ create_token_bank() ->
   put(current_bank_account_token, BankAccountId),
   ?assertEqual(false, T#stripe_token.used).
 
+% Immediate charge populates test account so transfers can go through.
+% Normal, non-immediate test cards, don't make test money available immediately.
+charge_token_immediate() ->
+  Token = get(current_card_token_immediate),
+  Desc = <<"MAH IMMEDIATE CHARGE">>,
+  Result = ?debugTime("Charging card immediate",
+    stripe:charge_card(90000999, usd, Token, Desc)),
+  ?debugFmt("Token Charge ID: ~p~n", [Result#stripe_charge.id]).
+
 charge_token() ->
   Token = get(current_card_token),
   Desc = <<"MAH CHARGE">>,
@@ -80,6 +101,7 @@ charge_token() ->
   ?assertEqual(true, Result#stripe_charge.paid),
   ?assertEqual(false, Result#stripe_charge.refunded),
   ?assertEqual(Desc, Result#stripe_charge.description).
+
 create_min_customer() ->
   Result = ?debugTime("Creating minimum customer",
     stripe:customer_create("", "", "")),
