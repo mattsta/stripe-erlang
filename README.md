@@ -20,7 +20,7 @@ operations:
   - updating a subscription
   - canceling a subscription
   - creating invoiceitems
-  - retrieving customers, events, and invoiceitems
+  - retrieving customers (all or paginated), events, and invoiceitems
 
 If you need refunds or transaction management, use the delightful stripe.com
 admin interface for now.

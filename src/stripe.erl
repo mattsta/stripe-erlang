@@ -17,7 +17,7 @@
 
 -include("stripe.hrl").
 
--define(VSN_BIN, <<"0.7.0">>).
+-define(VSN_BIN, <<"0.8.0">>).
 -define(VSN_STR, binary_to_list(?VSN_BIN)).
 
 % Stripe limit for paginated requests, change
