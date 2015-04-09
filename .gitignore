@@ -4,3 +4,4 @@ ebin/
 tags
 priv/currencies.json
 .rebar/
+.edts
