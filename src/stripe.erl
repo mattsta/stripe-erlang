@@ -3,7 +3,7 @@
 -module(stripe).
 
 -export([token_create/10, token_create_bank/3]).
--export([customer_create/3, customer_create_with_subsctiption/4, customer_get/1, customer_update/3]).
+-export([customer_create/3, customer_create_with_subscription/4, customer_get/1, customer_update/3]).
 -export([charge_customer/4, charge_card/4]).
 -export([subscription_update/3, subscription_update/5,
          subscription_update/6, subscription_cancel/2, subscription_cancel/3]).
@@ -55,7 +55,7 @@ customer_create(Card, Email, Desc) ->
             {description, Desc}],
   request_customer_create(Fields).
 
-customer_create_with_subsctiption(Card, Email, Desc, Plan) ->
+customer_create_with_subscription(Card, Email, Desc, Plan) ->
   Fields = [{card, Card},
             {email, Email},
             {description, Desc},
