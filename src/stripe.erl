@@ -364,7 +364,12 @@ json_to_record(Json) when is_list(Json) andalso is_tuple(hd(Json)) ->
 
 json_to_record(Body) when is_list(Body) orelse is_binary(Body) ->
   DecodedResult = mochijson2:decode(Body, [{format, proplist}]),
-  json_to_record(DecodedResult).
+  case proplists:get_value(<<"deleted">>,DecodedResult,undefined)of
+    undefined->
+      json_to_record(DecodedResult);
+    _->
+      json_to_record(<<"delete">>, DecodedResult)
+  end.
 
 % Yes, these are verbose and dumb because we don't have runtime record/object
 % capabilities.  In a way, it's nice being explicit up front.
@@ -422,6 +427,7 @@ json_to_record(<<"discount">>, DecodedResult) ->
                    'end'    = ?V('end'),
                    customer = ?V(customer)
                   };
+
 
 % We don't have eunit tests for coupon decoding yet.  Use at your own risk.
 json_to_record(<<"coupon">>, null) -> null;
@@ -482,6 +488,11 @@ json_to_record(<<"transfer">>, DecodedResult) ->
                    description  = ?V(description),
                    recipient    = ?V(recipient),
                    statement_descriptor = ?V(statement_descriptor)};
+
+
+json_to_record(<<"delete">>, DecodedResult) ->
+  #stripe_delete{id           = ?V(id),
+    deleted = ?V(deleted)};
 
 json_to_record(Type, DecodedResult) ->
   error_logger:error_msg({unimplemented, ?MODULE, json_to_record, Type, DecodedResult}),
