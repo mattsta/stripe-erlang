@@ -156,6 +156,7 @@
 -type recipient_id() :: binary().   % rp_*
 -type transfer_id()  :: binary().   % tr_*
 -type balance_txn()  :: binary().   % txn_*
+-type id()           :: binary().
 -type bank_name()    :: binary() | string().
 -type last4()        :: binary() | string().
 -type name()         :: binary() | string().
@@ -337,3 +338,5 @@
                           description    :: desc(),
                           recipient      :: recipient_id(),
                           statement_descriptor :: desc()}).
+
+-record(stripe_delete, {id::id(), deleted::true|false}).

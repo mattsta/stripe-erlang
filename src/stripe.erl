@@ -3,7 +3,7 @@
 -module(stripe).
 
 -export([token_create/10, token_create_bank/3]).
--export([customer_create/3, customer_get/1, customer_update/3]).
+-export([customer_create/3, customer_get/1, customer_update/3,customer_delete/1]).
 -export([charge_customer/4, charge_card/4]).
 -export([subscription_update/3, subscription_update/5,
          subscription_update/6, subscription_cancel/2, subscription_cancel/3]).
@@ -61,6 +61,14 @@ customer_create(Card, Email, Desc) ->
 -spec customer_get(customer_id()) -> result.
 customer_get(CustomerId) ->
   request_customer(CustomerId).
+
+
+%%%--------------------------------------------------------------------
+%%% Customer Deleteing
+%%%--------------------------------------------------------------------
+-spec customer_delete(customer_id()) -> result.
+customer_delete(CustomerId) ->
+  request_customer_delete(CustomerId).
 
 %%%--------------------------------------------------------------------
 %%% Customer Updating
@@ -196,6 +204,9 @@ request_event(EventId) ->
 
 request_customer(CustomerId) ->
   request_run(gen_customer_url(CustomerId), get, []).
+
+request_customer_delete(CustomerId) ->
+  request_run(gen_customer_url(CustomerId), delete, []).
 
 request_invoiceitem(InvoiceItemId) ->
   request_run(gen_invoiceitem_url(InvoiceItemId), get, []).
@@ -353,7 +364,12 @@ json_to_record(Json) when is_list(Json) andalso is_tuple(hd(Json)) ->
 
 json_to_record(Body) when is_list(Body) orelse is_binary(Body) ->
   DecodedResult = mochijson2:decode(Body, [{format, proplist}]),
-  json_to_record(DecodedResult).
+  case proplists:get_value(<<"deleted">>,DecodedResult,undefined)of
+    undefined->
+      json_to_record(DecodedResult);
+    _->
+      json_to_record(<<"delete">>, DecodedResult)
+  end.
 
 % Yes, these are verbose and dumb because we don't have runtime record/object
 % capabilities.  In a way, it's nice being explicit up front.
@@ -411,6 +427,7 @@ json_to_record(<<"discount">>, DecodedResult) ->
                    'end'    = ?V('end'),
                    customer = ?V(customer)
                   };
+
 
 % We don't have eunit tests for coupon decoding yet.  Use at your own risk.
 json_to_record(<<"coupon">>, null) -> null;
@@ -471,6 +488,11 @@ json_to_record(<<"transfer">>, DecodedResult) ->
                    description  = ?V(description),
                    recipient    = ?V(recipient),
                    statement_descriptor = ?V(statement_descriptor)};
+
+
+json_to_record(<<"delete">>, DecodedResult) ->
+  #stripe_delete{id           = ?V(id),
+    deleted = ?V(deleted)};
 
 json_to_record(Type, DecodedResult) ->
   error_logger:error_msg({unimplemented, ?MODULE, json_to_record, Type, DecodedResult}),
