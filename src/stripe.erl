@@ -3,7 +3,7 @@
 -module(stripe).
 
 -export([token_create/10, token_create_bank/3]).
--export([customer_create/3, customer_get/1, customer_update/3]).
+-export([customer_create/3, customer_get/1, customer_update/3,customer_delete/1]).
 -export([charge_customer/4, charge_card/4]).
 -export([subscription_update/3, subscription_update/5,
          subscription_update/6, subscription_cancel/2, subscription_cancel/3]).
@@ -61,6 +61,14 @@ customer_create(Card, Email, Desc) ->
 -spec customer_get(customer_id()) -> result.
 customer_get(CustomerId) ->
   request_customer(CustomerId).
+
+
+%%%--------------------------------------------------------------------
+%%% Customer Deleteing
+%%%--------------------------------------------------------------------
+-spec customer_delete(customer_id()) -> result.
+customer_delete(CustomerId) ->
+  request_customer_delete(CustomerId).
 
 %%%--------------------------------------------------------------------
 %%% Customer Updating
@@ -196,6 +204,9 @@ request_event(EventId) ->
 
 request_customer(CustomerId) ->
   request_run(gen_customer_url(CustomerId), get, []).
+
+request_customer_delete(CustomerId) ->
+  request_run(gen_customer_url(CustomerId), delete, []).
 
 request_invoiceitem(InvoiceItemId) ->
   request_run(gen_invoiceitem_url(InvoiceItemId), get, []).
