@@ -4,3 +4,5 @@ ebin/
 tags
 priv/currencies.json
 .rebar/
+_build/
+rebar.lock
