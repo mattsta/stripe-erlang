@@ -144,7 +144,7 @@ recipient_update(RecipientId, Name, TaxId, Bank, Email, Desc) ->
 transfer_create(Amount, Currency, RecipientId, Desc, StatementDesc) ->
   Fields = [{amount, Amount},
             {currency, Currency},
-            {recipient, RecipientId},
+            {destination, RecipientId},
             {description, Desc},
             {statement_descriptor, StatementDesc}],
   request_transfer_create(Fields).

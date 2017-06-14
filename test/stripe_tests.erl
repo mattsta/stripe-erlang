@@ -33,14 +33,18 @@ stripe_test_() ->
        fun charge_customer/0},
      {"Update Customer",
        fun update_customer/0},
-     {"Create Recipient",
-       fun create_recipient/0},
-     {"Update Recipient",
-       fun update_recipient/0},
-     {"Create Transfer",
-       fun create_transfer/0},
-     {"Cancel Transfer",
-       fun cancel_transfer/0},
+       % NOTE: Recipients are DEPRECATED by Stripe and new ones can't be
+       % created anymore, so all of our testing for transfers (which is
+       % now TRANSFERS vs. PAYOUTS (and we don't have internal
+       % /payouts/ endpoint APIs yet) is now invalid.
+%     {"Create Recipient",
+%       fun create_recipient/0},
+%     {"Update Recipient",
+%       fun update_recipient/0},
+%     {"Create Transfer",
+%       fun create_transfer/0},
+%     {"Cancel Transfer",
+%       fun cancel_transfer/0},
      {"Create Invoice Item",
        fun create_invoice_item/0},
      {"Get Invoice Item",
@@ -145,53 +149,53 @@ update_customer() ->
     stripe:customer_update(get(current_customer), Token, Email)),
   ?debugFmt("Customer ID: ~p~n", [Result#stripe_customer.id]).
 
-create_recipient() ->
-  % Create a bank account token first so we can create a recipient with a way
-  % to receive payments
-  BankAccountId = get(current_bank_account_token),
-  R = ?debugTime("Creating recipient",
-    stripe:recipient_create("Bob Jones", individual,
-                            "000000000", BankAccountId, "bob@bob.bob", "A Desc")),
-  put(recipient_id, R#stripe_recipient.id),
-  ?debugFmt("Recipient ID: ~p~n", [R#stripe_recipient.id]),
-  ?assertEqual(individual, R#stripe_recipient.type),
-  ?assertEqual(<<"Bob Jones">>, R#stripe_recipient.name),
-  ?assertEqual(true, R#stripe_recipient.verified),
-  ?assertEqual(<<"bob@bob.bob">>, R#stripe_recipient.email).
-
-update_recipient() ->
-  RecipientId = get(recipient_id),
-  R = ?debugTime("Updating recipient",
-    stripe:recipient_update(RecipientId, "Bob2 Jones2", [], [], "email2@2.com", [])),
-  ?debugFmt("Recipient ID: ~p~n", [R#stripe_recipient.id]),
-  ?assertEqual(<<"Bob2 Jones2">>, R#stripe_recipient.name),
-  ?assertEqual(<<"email2@2.com">>, R#stripe_recipient.email).
-
-create_transfer() ->
-  T = ?debugTime("Creating transfer",
-    stripe:transfer_create(6500000, usd, get(recipient_id), "Foo", "Prell")),
-  case is_record(T, stripe_transfer) of
-      true ->
-          put(transfer_id, T#stripe_transfer.id),
-          ?debugFmt("Transfer ID: ~p~n", [T#stripe_transfer.id]),
-          ?assertEqual(pending, T#stripe_transfer.status),
-          ?assertEqual(6500000, T#stripe_transfer.amount),
-          ?assertEqual(usd, T#stripe_transfer.currency),
-          ?assertEqual(true, is_binary(T#stripe_transfer.balance_transaction));
-      false ->
-          {error, Reason} = T,
-          ?debugFmt("Transfer failed: ~p~n", [Reason])
-  end.
-
-
-cancel_transfer() ->
-  TransferId = get(transfer_id),
-  T = ?debugTime("Canceling transfer",
-    stripe:transfer_cancel(TransferId)),
-  ?debugFmt("Transfer ID: ~p~n", [TransferId]),
-  % This goes through but fails because the previous transfer is
-  % considred automatic... or something.
-  ?assertMatch(#stripe_error{}, T).
+%create_recipient() ->
+%  % Create a bank account token first so we can create a recipient with a way
+%  % to receive payments
+%  BankAccountId = get(current_bank_account_token),
+%  R = ?debugTime("Creating recipient",
+%    stripe:recipient_create("Bob Jones", individual,
+%                            "000000000", BankAccountId, "bob@bob.bob", "A Desc")),
+%  put(recipient_id, R#stripe_recipient.id),
+%  ?debugFmt("Recipient ID: ~p~n", [R#stripe_recipient.id]),
+%  ?assertEqual(individual, R#stripe_recipient.type),
+%  ?assertEqual(<<"Bob Jones">>, R#stripe_recipient.name),
+%  ?assertEqual(true, R#stripe_recipient.verified),
+%  ?assertEqual(<<"bob@bob.bob">>, R#stripe_recipient.email).
+%
+%update_recipient() ->
+%  RecipientId = get(recipient_id),
+%  R = ?debugTime("Updating recipient",
+%    stripe:recipient_update(RecipientId, "Bob2 Jones2", [], [], "email2@2.com", [])),
+%  ?debugFmt("Recipient ID: ~p~n", [R#stripe_recipient.id]),
+%  ?assertEqual(<<"Bob2 Jones2">>, R#stripe_recipient.name),
+%  ?assertEqual(<<"email2@2.com">>, R#stripe_recipient.email).
+%
+%create_transfer() ->
+%  T = ?debugTime("Creating transfer",
+%    stripe:transfer_create(6500000, usd, get(recipient_id), "Foo", "Prell")),
+% case is_record(T, stripe_transfer) of
+%     true ->
+%         put(transfer_id, T#stripe_transfer.id),
+%         ?debugFmt("Transfer ID: ~p~n", [T#stripe_transfer.id]),
+%         ?assertEqual(pending, T#stripe_transfer.status),
+%         ?assertEqual(6500000, T#stripe_transfer.amount),
+%         ?assertEqual(usd, T#stripe_transfer.currency),
+%         ?assertEqual(true, is_binary(T#stripe_transfer.balance_transaction));
+%     false ->
+%         {error, Reason} = T,
+%          ?debugFmt("Transfer failed: ~p~n", [Reason])
+%  end.
+%
+%
+%cancel_transfer() ->
+%  TransferId = get(transfer_id),
+%  T = ?debugTime("Canceling transfer",
+%    stripe:transfer_cancel(TransferId)),
+%  ?debugFmt("Transfer ID: ~p~n", [TransferId]),
+%  % This goes through but fails because the previous transfer is
+%  % considred automatic... or something.
+%  ?assertMatch(#stripe_error{}, T).
 
 create_invoice_item() ->
   Customer = get(current_customer),
