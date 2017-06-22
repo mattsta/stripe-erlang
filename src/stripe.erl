@@ -3,7 +3,7 @@
 -module(stripe).
 
 -export([token_create/10, token_create_bank/3]).
--export([customer_create/3, customer_get/1, customer_update/3]).
+-export([customer_create/3, customer_get/1, customer_update/3,customer_delete/1]).
 -export([charge_customer/4, charge_card/4]).
 -export([subscription_update/3, subscription_update/5,
          subscription_update/6, subscription_cancel/2, subscription_cancel/3]).
@@ -54,6 +54,15 @@ customer_create(Card, Email, Desc) ->
             {email, Email},
             {description, Desc}],
   request_customer_create(Fields).
+
+%%%--------------------------------------------------------------------
+%%% Customer delete
+%%%--------------------------------------------------------------------
+-spec customer_delete(customer_id()) -> result.
+customer_delete(CustomerId) ->
+  request_customer_delete(CustomerId).
+
+
 
 %%%--------------------------------------------------------------------
 %%% Customer Fetching
@@ -196,6 +205,9 @@ request_event(EventId) ->
 
 request_customer(CustomerId) ->
   request_run(gen_customer_url(CustomerId), get, []).
+
+request_customer_delete(CustomerId) ->
+  request_run(gen_customer_url(CustomerId), delete, []).
 
 request_invoiceitem(InvoiceItemId) ->
   request_run(gen_invoiceitem_url(InvoiceItemId), get, []).
@@ -471,6 +483,11 @@ json_to_record(<<"transfer">>, DecodedResult) ->
                    description  = ?V(description),
                    recipient    = ?V(recipient),
                    statement_descriptor = ?V(statement_descriptor)};
+
+json_to_record(undefined, [{<<"deleted">>, Status}, {<<"id">>, ObjectId}]) ->
+  #stripe_delete{id     = ObjectId,
+                 status = Status};
+
 
 json_to_record(Type, DecodedResult) ->
   error_logger:error_msg({unimplemented, ?MODULE, json_to_record, Type, DecodedResult}),

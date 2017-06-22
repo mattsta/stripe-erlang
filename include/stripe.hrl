@@ -337,3 +337,6 @@
                           description    :: desc(),
                           recipient      :: recipient_id(),
                           statement_descriptor :: desc()}).
+
+-record(stripe_delete, {id     :: customer_id() | plan_id() | coupon_id() | invoice_id(),
+                        status :: true| false}).
